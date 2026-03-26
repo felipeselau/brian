@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  OWNER
+  WORKER
+  CLIENT
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum RequestStatus {
+  BACKLOG
+  IN_PROGRESS
+  REVIEW
+  DONE
+  BLOCKED
+  WAITING
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Hashed password
+  role          UserRole  @default(WORKER)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  ownedProjects    Project[]        @relation("ProjectOwner")
+  projectMembers   ProjectMember[]
+  assignedRequests Request[]        @relation("AssignedRequests")
+  createdRequests  Request[]        @relation("CreatedRequests")
+  comments         Comment[]
+  
+  @@map("users")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  title       String
+  description String?       @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  status      ProjectStatus @default(ACTIVE)
+  
+  // JSON fields
+  columns     Json          // Array de colunas: [{ id, title, order }]
+  settings    Json          // { requireEstimateBeforeStart, estimateRequired }
+  
+  // Relations
+  ownerId     String
+  owner       User          @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  members     ProjectMember[]
+  requests    Request[]
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@index([ownerId])
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  role      UserRole
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Request {
+  id             String        @id @default(cuid())
+  title          String
+  description    String?       @db.Text
+  status         RequestStatus @default(BACKLOG)
+  
+  projectId      String
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  assignedToId   String?
+  assignedTo     User?         @relation("AssignedRequests", fields: [assignedToId], references: [id], onDelete: SetNull)
+  
+  createdById    String
+  createdBy      User          @relation("CreatedRequests", fields: [createdById], references: [id], onDelete: Cascade)
+  
+  estimatedHours Float?
+  loggedHours    Float         @default(0)
+  
+  // JSON fields
+  approvals      Json          // { owner: boolean?, client: boolean? }
+  lifecycleLog   Json          // Array: [{ from, to, by, at }]
+  
+  // Relations
+  comments       Comment[]
+  attachments    Attachment[]
+  
+  // Position in column (for ordering)
+  position       Int           @default(0)
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  @@index([projectId])
+  @@index([assignedToId])
+  @@index([status])
+  @@map("requests")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([requestId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  size      Int?
+  type      String?
+  
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([requestId])
+  @@map("attachments")
+}
