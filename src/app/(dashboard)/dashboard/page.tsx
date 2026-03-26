@@ -1,5 +1,11 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { ProjectList } from "@/components/projects/project-list";
+import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { UserRole } from "@prisma/client";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -8,35 +14,126 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // Fetch user's projects (owned + member)
+  const projects = await prisma.project.findMany({
+    where: {
+      OR: [
+        { ownerId: session.user.id },
+        { members: { some: { userId: session.user.id } } },
+      ],
+      status: "ACTIVE", // Only show active projects on dashboard
+    },
+    include: {
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          requests: true,
+          members: true,
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 6, // Limit to 6 most recent projects
+  });
+
+  // Get stats
+  const totalProjects = await prisma.project.count({
+    where: {
+      OR: [
+        { ownerId: session.user.id },
+        { members: { some: { userId: session.user.id } } },
+      ],
+    },
+  });
+
+  const activeRequests = await prisma.request.count({
+    where: {
+      project: {
+        OR: [
+          { ownerId: session.user.id },
+          { members: { some: { userId: session.user.id } } },
+        ],
+      },
+      status: {
+        in: ["BACKLOG", "IN_PROGRESS", "REVIEW", "BLOCKED", "WAITING"],
+      },
+    },
+  });
+
+  // Calculate total hours
+  const requests = await prisma.request.findMany({
+    where: {
+      project: {
+        OR: [
+          { ownerId: session.user.id },
+          { members: { some: { userId: session.user.id } } },
+        ],
+      },
+    },
+    select: {
+      loggedHours: true,
+    },
+  });
+
+  const totalHours = requests.reduce((sum: number, req) => sum + (req.loggedHours || 0), 0);
+
   return (
     <div className="container mx-auto py-8">
       <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back, {session.user.name}!
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Welcome back, {session.user.name}!
+            </p>
+          </div>
+          {session.user.role === UserRole.OWNER && <CreateProjectDialog />}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">My Projects</h3>
-            <p className="text-2xl font-bold mt-2">0</p>
+            <p className="text-2xl font-bold mt-2">{totalProjects}</p>
           </div>
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">Active Requests</h3>
-            <p className="text-2xl font-bold mt-2">0</p>
+            <p className="text-2xl font-bold mt-2">{activeRequests}</p>
           </div>
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">Total Hours</h3>
-            <p className="text-2xl font-bold mt-2">0h</p>
+            <p className="text-2xl font-bold mt-2">{totalHours.toFixed(1)}h</p>
           </div>
         </div>
 
-        <div className="rounded-lg border p-6">
-          <p className="text-muted-foreground text-center py-12">
-            No projects yet. Create your first project to get started!
-          </p>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Recent Projects</h2>
+            {projects.length > 0 && (
+              <Button variant="outline" asChild>
+                <Link href="/projects">View All</Link>
+              </Button>
+            )}
+          </div>
+          <ProjectList projects={projects} currentUserId={session.user.id} />
         </div>
       </div>
     </div>
