@@ -302,3 +302,56 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+// DELETE /api/invites - Revoke an invite (owner only)
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { inviteId } = body;
+
+    if (!inviteId) {
+      return NextResponse.json(
+        { error: "Invite ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Find the invite
+    const invite = await prisma.invite.findUnique({
+      where: { id: inviteId },
+      include: { project: { select: { ownerId: true } } },
+    });
+
+    if (!invite) {
+      return NextResponse.json({ error: "Invite not found" }, { status: 404 });
+    }
+
+    // Check if user is the project owner
+    if (invite.project.ownerId !== session.user.id) {
+      return NextResponse.json(
+        { error: "Only project owners can revoke invites" },
+        { status: 403 }
+      );
+    }
+
+    // Update invite status to EXPIRED (revoked)
+    await prisma.invite.update({
+      where: { id: inviteId },
+      data: { status: "EXPIRED" },
+    });
+
+    return NextResponse.json({ message: "Invite revoked successfully" });
+  } catch (error) {
+    console.error("Error revoking invite:", error);
+    return NextResponse.json(
+      { error: "Something went wrong" },
+      { status: 500 }
+    );
+  }
+}

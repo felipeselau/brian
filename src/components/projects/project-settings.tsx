@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { UserMinus, Loader2, Copy, Mail, Check, RefreshCw } from "lucide-react";
+import { UserMinus, Loader2, Copy, Mail, Check, RefreshCw, X } from "lucide-react";
 
 interface ProjectMember {
   id: string;
@@ -69,6 +69,7 @@ export function ProjectSettings({
   const [copied, setCopied] = useState<string | null>(null);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
   // Fetch pending invites
   const fetchPendingInvites = async () => {
@@ -152,6 +153,32 @@ export function ProjectSettings({
       toast.error(err instanceof Error ? err.message : "Failed to resend invite");
     } finally {
       setResendingId(null);
+    }
+  };
+
+  const handleRevoke = async (invite: PendingInvite) => {
+    setRevokingId(invite.id);
+
+    try {
+      const response = await fetch("/api/invites", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteId: invite.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to revoke invite");
+      }
+
+      toast.success(`Invite to ${invite.email} revoked`);
+      fetchPendingInvites();
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to revoke invite");
+    } finally {
+      setRevokingId(null);
     }
   };
 
@@ -430,6 +457,20 @@ export function ProjectSettings({
                       <RefreshCw className="h-4 w-4 mr-1" />
                     )}
                     {resendingId === invite.id ? "Sending..." : "Resend"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRevoke(invite)}
+                    disabled={revokingId === invite.id}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    {revokingId === invite.id ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <X className="h-4 w-4 mr-1" />
+                    )}
+                    {revokingId === invite.id ? "Revoking..." : "Revoke"}
                   </Button>
                 </div>
               </div>
