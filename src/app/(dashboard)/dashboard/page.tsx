@@ -46,7 +46,7 @@ export default async function DashboardPage() {
       },
       _count: {
         select: {
-          requests: true,
+          tickets: true,
           members: true,
         },
       },
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
     },
   });
 
-  const activeRequests = await prisma.request.count({
+  const activeTickets = await prisma.ticket.count({
     where: {
       project: {
         OR: [
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
   });
 
   // Calculate total hours
-  const requests = await prisma.request.findMany({
+  const tickets = await prisma.ticket.findMany({
     where: {
       project: {
         OR: [
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
     },
   });
 
-  const totalHours = requests.reduce((sum: number, req) => sum + (req.loggedHours || 0), 0);
+  const totalHours = tickets.reduce((sum: number, ticket) => sum + (ticket.loggedHours || 0), 0);
 
   return (
     <div className="container mx-auto py-8">
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
           </div>
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">Active Briefs</h3>
-            <p className="text-2xl font-bold mt-2">{activeRequests}</p>
+            <p className="text-2xl font-bold mt-2">{activeTickets}</p>
           </div>
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">Hours Logged</h3>

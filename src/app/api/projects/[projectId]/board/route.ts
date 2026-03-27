@@ -3,13 +3,13 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
-const moveRequestSchema = z.object({
-  requestId: z.string(),
+const moveTicketSchema = z.object({
+  ticketId: z.string(),
   status: z.string().optional(),
   position: z.number().optional(),
 });
 
-// GET /api/projects/[projectId]/board - Get board with columns and requests
+// GET /api/projects/[projectId]/board - Get board with columns and tickets
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -47,7 +47,7 @@ export async function GET(
             },
           },
         },
-        requests: {
+        tickets: {
           orderBy: [{ status: "asc" }, { position: "asc" }, { createdAt: "desc" }],
           include: {
             assignedTo: {
@@ -90,7 +90,7 @@ export async function GET(
         columns: project.columns,
         settings: project.settings,
       },
-      requests: project.requests,
+      tickets: project.tickets,
     });
   } catch (error) {
     console.error("Error fetching board:", error);
@@ -101,7 +101,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/projects/[projectId]/board - Move request to column
+// PATCH /api/projects/[projectId]/board - Move ticket to column
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -115,34 +115,34 @@ export async function PATCH(
 
     const { projectId } = await params;
     const body = await req.json();
-    const validatedData = moveRequestSchema.parse(body);
+    const validatedData = moveTicketSchema.parse(body);
 
-    // Check if request exists and belongs to project
-    const request = await prisma.request.findUnique({
-      where: { id: validatedData.requestId },
+    // Check if ticket exists and belongs to project
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: validatedData.ticketId },
       include: {
         project: true,
       },
     });
 
-    if (!request || request.projectId !== projectId) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket || ticket.projectId !== projectId) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Check permissions: owner, assigned worker, or createdBy can move
-    const isOwner = request.project.ownerId === session.user.id;
-    const isAssigned = request.assignedToId === session.user.id;
-    const isCreator = request.createdById === session.user.id;
+    const isOwner = ticket.project.ownerId === session.user.id;
+    const isAssigned = ticket.assignedToId === session.user.id;
+    const isCreator = ticket.createdById === session.user.id;
 
     if (!isOwner && !isAssigned && !isCreator) {
       return NextResponse.json(
-        { error: "You don't have permission to move this request" },
+        { error: "You don't have permission to move this ticket" },
         { status: 403 }
       );
     }
 
     // Get project settings for business rules enforcement
-    const settings = (request.project.settings as { requireEstimateBeforeStart?: boolean; estimateRequired?: boolean }) || {};
+    const settings = (ticket.project.settings as { requireEstimateBeforeStart?: boolean; estimateRequired?: boolean }) || {};
     const newStatus = validatedData.status?.toUpperCase();
 
     // Business Rule: requireEstimateBeforeStart
@@ -150,14 +150,14 @@ export async function PATCH(
     if (
       settings.requireEstimateBeforeStart &&
       newStatus === "IN_PROGRESS" &&
-      request.status !== "IN_PROGRESS" &&
-      request.estimatedHours === null
+      ticket.status !== "IN_PROGRESS" &&
+      ticket.estimatedHours === null
     ) {
       return NextResponse.json(
         { 
           error: "Estimate required before starting work",
           code: "ESTIMATE_REQUIRED_BEFORE_START",
-          message: "This project requires an estimate before moving requests to In Progress. Please add an estimated hours value first."
+          message: "This project requires an estimate before moving tickets to In Progress. Please add an estimated hours value first."
         },
         { status: 400 }
       );
@@ -168,15 +168,15 @@ export async function PATCH(
     if (
       settings.estimateRequired &&
       (newStatus === "DONE" || newStatus === "REVIEW") &&
-      request.status !== "DONE" &&
-      request.status !== "REVIEW" &&
-      request.estimatedHours === null
+      ticket.status !== "DONE" &&
+      ticket.status !== "REVIEW" &&
+      ticket.estimatedHours === null
     ) {
       return NextResponse.json(
         { 
           error: "Estimate required for completion",
           code: "ESTIMATE_REQUIRED_FOR_COMPLETION",
-          message: "This project requires an estimate before completing requests. Please add an estimated hours value first."
+          message: "This project requires an estimate before completing tickets. Please add an estimated hours value first."
         },
         { status: 400 }
       );
@@ -184,13 +184,13 @@ export async function PATCH(
 
     // Build update data
     const updateData: Record<string, unknown> = {};
-    const lifecycleLog = (request.lifecycleLog as Array<{ from: string; to: string; by: string; at: string }>) || [];
+    const lifecycleLog = (ticket.lifecycleLog as Array<{ from: string; to: string; by: string; at: string }>) || [];
 
-    if (newStatus && newStatus !== request.status) {
+    if (newStatus && newStatus !== ticket.status) {
       updateData.status = newStatus;
       // Append to lifecycle log
       lifecycleLog.push({
-        from: request.status,
+        from: ticket.status,
         to: newStatus,
         by: session.user.id,
         at: new Date().toISOString(),
@@ -202,8 +202,8 @@ export async function PATCH(
       updateData.position = validatedData.position;
     }
 
-    const updatedRequest = await prisma.request.update({
-      where: { id: validatedData.requestId },
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: validatedData.ticketId },
       data: updateData,
       include: {
         assignedTo: {
@@ -217,16 +217,16 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ request: updatedRequest });
+    return NextResponse.json({ ticket: updatedTicket });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json(
-        { error: "Invalid request data", details: error },
+        { error: "Invalid ticket data", details: error },
         { status: 400 }
       );
     }
 
-    console.error("Error moving request:", error);
+    console.error("Error moving ticket:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

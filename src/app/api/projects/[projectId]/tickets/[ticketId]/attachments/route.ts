@@ -10,10 +10,10 @@ const createAttachmentSchema = z.object({
   type: z.string().optional(),
 });
 
-// GET /api/projects/[projectId]/requests/[requestId]/attachments - List attachments
+// GET /api/projects/[projectId]/tickets/[ticketId]/attachments - List attachments
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -22,22 +22,22 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = await params;
+    const { ticketId } = await params;
 
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: { project: true },
     });
 
-    if (!request) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    const isOwner = request.project.ownerId === session.user.id;
+    const isOwner = ticket.project.ownerId === session.user.id;
     const isMember = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: request.projectId,
+          projectId: ticket.projectId,
           userId: session.user.id,
         },
       },
@@ -48,7 +48,7 @@ export async function GET(
     }
 
     const attachments = await prisma.attachment.findMany({
-      where: { requestId },
+      where: { ticketId },
       orderBy: { createdAt: "desc" },
     });
 
@@ -62,10 +62,10 @@ export async function GET(
   }
 }
 
-// POST /api/projects/[projectId]/requests/[requestId]/attachments - Add attachment
+// POST /api/projects/[projectId]/tickets/[ticketId]/attachments - Add attachment
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -74,24 +74,24 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = await params;
+    const { ticketId } = await params;
     const body = await req.json();
     const validatedData = createAttachmentSchema.parse(body);
 
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: { project: true },
     });
 
-    if (!request) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    const isOwner = request.project.ownerId === session.user.id;
+    const isOwner = ticket.project.ownerId === session.user.id;
     const isMember = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: request.projectId,
+          projectId: ticket.projectId,
           userId: session.user.id,
         },
       },
@@ -107,7 +107,7 @@ export async function POST(
         url: validatedData.url,
         size: validatedData.size,
         type: validatedData.type,
-        requestId,
+        ticketId,
       },
     });
 
@@ -129,10 +129,10 @@ export async function POST(
   }
 }
 
-// DELETE /api/projects/[projectId]/requests/[requestId]/attachments?attachmentId=... - Delete attachment
+// DELETE /api/projects/[projectId]/tickets/[ticketId]/attachments?attachmentId=... - Delete attachment
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -152,18 +152,18 @@ export async function DELETE(
     const attachment = await prisma.attachment.findUnique({
       where: { id: attachmentId },
       include: {
-        request: {
+        ticket: {
           include: { project: true },
         },
       },
     });
 
-    if (!attachment || attachment.request.projectId !== projectId) {
+    if (!attachment || attachment.ticket.projectId !== projectId) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 
     // Only project owner or the person who uploaded can delete (no userId on attachment, so just owner)
-    const isProjectOwner = attachment.request.project.ownerId === session.user.id;
+    const isProjectOwner = attachment.ticket.project.ownerId === session.user.id;
 
     if (!isProjectOwner) {
       return NextResponse.json(

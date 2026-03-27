@@ -34,7 +34,7 @@ interface Member {
   };
 }
 
-interface CreateRequestDialogProps {
+interface CreateTicketDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
@@ -42,13 +42,13 @@ interface CreateRequestDialogProps {
   defaultStatus?: string;
 }
 
-export function CreateRequestDialog({
+export function CreateTicketDialog({
   open,
   onOpenChange,
   projectId,
   members,
   defaultStatus = "BACKLOG",
-}: CreateRequestDialogProps) {
+}: CreateTicketDialogProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -64,7 +64,7 @@ export function CreateRequestDialog({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/requests`, {
+      const response = await fetch(`/api/projects/${projectId}/tickets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -76,10 +76,10 @@ export function CreateRequestDialog({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create request");
+        throw new Error(error.error || "Failed to create ticket");
       }
 
-      toast.success("Request created successfully!");
+      toast.success("Ticket created!");
       setFormData({
         title: "",
         description: "",
@@ -90,9 +90,9 @@ export function CreateRequestDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      console.error("Error creating request:", error);
+      console.error("Error creating ticket:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create request"
+        error instanceof Error ? error.message : "Failed to create ticket"
       );
     } finally {
       setIsLoading(false);
@@ -106,7 +106,7 @@ export function CreateRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New Request</DialogTitle>
+          <DialogTitle>Create a Ticket</DialogTitle>
           <DialogDescription>
             Create a new task or work item for this project
           </DialogDescription>
@@ -203,7 +203,7 @@ export function CreateRequestDialog({
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {isLoading ? "Creating..." : "Create Request"}
+              {isLoading ? "Creating..." : "Create Ticket"}
             </Button>
           </div>
         </form>

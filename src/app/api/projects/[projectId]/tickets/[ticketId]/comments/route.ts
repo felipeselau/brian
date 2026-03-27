@@ -7,10 +7,10 @@ const createCommentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty"),
 });
 
-// GET /api/projects/[projectId]/requests/[requestId]/comments - List comments
+// GET /api/projects/[projectId]/tickets/[ticketId]/comments - List comments
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -19,24 +19,24 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = await params;
+    const { ticketId } = await params;
 
-    // Check if request exists
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
+    // Check if ticket exists
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: { project: true },
     });
 
-    if (!request) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Check access
-    const isOwner = request.project.ownerId === session.user.id;
+    const isOwner = ticket.project.ownerId === session.user.id;
     const isMember = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: request.projectId,
+          projectId: ticket.projectId,
           userId: session.user.id,
         },
       },
@@ -47,7 +47,7 @@ export async function GET(
     }
 
     const comments = await prisma.comment.findMany({
-      where: { requestId },
+      where: { ticketId },
       include: {
         user: {
           select: {
@@ -71,10 +71,10 @@ export async function GET(
   }
 }
 
-// POST /api/projects/[projectId]/requests/[requestId]/comments - Add comment
+// POST /api/projects/[projectId]/tickets/[ticketId]/comments - Add comment
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -83,26 +83,26 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = await params;
+    const { ticketId } = await params;
     const body = await req.json();
     const validatedData = createCommentSchema.parse(body);
 
-    // Check if request exists
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
+    // Check if ticket exists
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: { project: true },
     });
 
-    if (!request) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Check access - project member
-    const isOwner = request.project.ownerId === session.user.id;
+    const isOwner = ticket.project.ownerId === session.user.id;
     const isMember = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: request.projectId,
+          projectId: ticket.projectId,
           userId: session.user.id,
         },
       },
@@ -115,7 +115,7 @@ export async function POST(
     const comment = await prisma.comment.create({
       data: {
         content: validatedData.content,
-        requestId,
+        ticketId,
         userId: session.user.id,
       },
       include: {
@@ -148,10 +148,10 @@ export async function POST(
   }
 }
 
-// DELETE /api/projects/[projectId]/requests/[requestId]/comments?commentId=... - Delete comment
+// DELETE /api/projects/[projectId]/tickets/[ticketId]/comments?commentId=... - Delete comment
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -172,18 +172,18 @@ export async function DELETE(
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
       include: {
-        request: {
+        ticket: {
           include: { project: true },
         },
       },
     });
 
-    if (!comment || comment.request.projectId !== projectId) {
+    if (!comment || comment.ticket.projectId !== projectId) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
     // Check permissions - only comment author or project owner can delete
-    const isProjectOwner = comment.request.project.ownerId === session.user.id;
+    const isProjectOwner = comment.ticket.project.ownerId === session.user.id;
     const isCommentAuthor = comment.userId === session.user.id;
 
     if (!isProjectOwner && !isCommentAuthor) {

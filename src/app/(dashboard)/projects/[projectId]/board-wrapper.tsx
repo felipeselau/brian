@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { KanbanBoard } from "@/components/board";
-import { CreateRequestDialog } from "@/components/requests/create-request-dialog";
+import { CreateTicketDialog } from "@/components/tickets/create-ticket-dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { RequestStatus } from "@prisma/client";
+import { TicketStatus } from "@prisma/client";
 
 interface Column {
   id: string;
@@ -13,11 +13,11 @@ interface Column {
   order: number;
 }
 
-interface Request {
+interface Ticket {
   id: string;
   title: string;
   description: string | null;
-  status: RequestStatus;
+  status: TicketStatus;
   estimatedHours: number | null;
   loggedHours: number;
   assignedTo: {
@@ -42,15 +42,15 @@ interface Member {
 interface BoardWrapperProps {
   projectId: string;
   columns: Column[];
-  requests: Request[];
+  tickets: Ticket[];
   members: Member[];
 }
 
-export function BoardWrapper({ projectId, columns, requests, members }: BoardWrapperProps) {
+export function BoardWrapper({ projectId, columns, tickets, members }: BoardWrapperProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [defaultStatus, setDefaultStatus] = useState("BACKLOG");
 
-  const handleAddRequest = (columnId: string) => {
+  const handleAddTicket = (columnId: string) => {
     // Map column id to status
     const statusMap: Record<string, string> = {
       backlog: "BACKLOG",
@@ -69,18 +69,18 @@ export function BoardWrapper({ projectId, columns, requests, members }: BoardWra
       <div className="flex justify-end mb-4">
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          New Request
+          New Ticket
         </Button>
       </div>
 
       <KanbanBoard
         projectId={projectId}
         initialColumns={columns}
-        initialRequests={requests}
-        onAddRequest={handleAddRequest}
+        initialTickets={tickets}
+        onAddTicket={handleAddTicket}
       />
 
-      <CreateRequestDialog
+      <CreateTicketDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         projectId={projectId}

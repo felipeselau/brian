@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
-const updateRequestSchema = z.object({
+const updateTicketSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional().nullable(),
   status: z.string().optional(),
@@ -12,10 +12,10 @@ const updateRequestSchema = z.object({
   loggedHours: z.number().optional(),
 });
 
-// GET /api/projects/[projectId]/requests/[requestId] - Get single request
+// GET /api/projects/[projectId]/tickets/[ticketId] - Get single ticket
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -24,10 +24,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = await params;
+    const { projectId, ticketId } = await params;
 
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: {
         project: {
           include: {
@@ -89,13 +89,13 @@ export async function GET(
       },
     });
 
-    if (!request || request.projectId !== projectId) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket || ticket.projectId !== projectId) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Check if user has access
-    const isOwner = request.project.ownerId === session.user.id;
-    const isMember = request.project.members.some(
+    const isOwner = ticket.project.ownerId === session.user.id;
+    const isMember = ticket.project.members.some(
       (m) => m.userId === session.user.id
     );
 
@@ -103,9 +103,9 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ request });
+    return NextResponse.json({ ticket });
   } catch (error) {
-    console.error("Error fetching request:", error);
+    console.error("Error fetching ticket:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -113,10 +113,10 @@ export async function GET(
   }
 }
 
-// PATCH /api/projects/[projectId]/requests/[requestId] - Update request
+// PATCH /api/projects/[projectId]/tickets/[ticketId] - Update ticket
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -125,40 +125,40 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = await params;
+    const { projectId, ticketId } = await params;
     const body = await req.json();
 
-    const existingRequest = await prisma.request.findUnique({
-      where: { id: requestId },
+    const existingTicket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: { project: true },
     });
 
-    if (!existingRequest || existingRequest.projectId !== projectId) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!existingTicket || existingTicket.projectId !== projectId) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Check permissions
-    const isOwner = existingRequest.project.ownerId === session.user.id;
-    const isAssigned = existingRequest.assignedToId === session.user.id;
-    const isCreator = existingRequest.createdById === session.user.id;
+    const isOwner = existingTicket.project.ownerId === session.user.id;
+    const isAssigned = existingTicket.assignedToId === session.user.id;
+    const isCreator = existingTicket.createdById === session.user.id;
 
     if (!isOwner && !isAssigned && !isCreator) {
       return NextResponse.json(
-        { error: "You don't have permission to update this request" },
+        { error: "You don't have permission to update this ticket" },
         { status: 403 }
       );
     }
 
     // Build update data
     const updateData: any = {};
-    const lifecycleLog = existingRequest.lifecycleLog as any[] || [];
+    const lifecycleLog = existingTicket.lifecycleLog as any[] || [];
 
     // Handle status change
-    if (body.status && body.status.toUpperCase() !== existingRequest.status) {
+    if (body.status && body.status.toUpperCase() !== existingTicket.status) {
       const newStatus = body.status.toUpperCase();
       updateData.status = newStatus;
       lifecycleLog.push({
-        from: existingRequest.status,
+        from: existingTicket.status,
         to: newStatus,
         by: session.user.id,
         at: new Date().toISOString(),
@@ -167,14 +167,14 @@ export async function PATCH(
 
     if (body.title) updateData.title = body.title;
     if (body.description !== undefined) updateData.description = body.description;
-    if (body.assignedToId !== undefined) updateData.assignedToId = body.assignedToId;
+    if (body.assignedToId !== undefined) updateData.assignedToId = body.assignedToId || null;
     if (body.estimatedHours !== undefined) updateData.estimatedHours = body.estimatedHours;
     if (body.loggedHours !== undefined) updateData.loggedHours = body.loggedHours;
 
     updateData.lifecycleLog = lifecycleLog;
 
-    const request = await prisma.request.update({
-      where: { id: requestId },
+    const ticket = await prisma.ticket.update({
+      where: { id: ticketId },
       data: updateData,
       include: {
         assignedTo: {
@@ -188,16 +188,16 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ request });
+    return NextResponse.json({ ticket });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json(
-        { error: "Invalid request data" },
+        { error: "Invalid ticket data" },
         { status: 400 }
       );
     }
 
-    console.error("Error updating request:", error);
+    console.error("Error updating ticket:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -205,10 +205,10 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/projects/[projectId]/requests/[requestId] - Delete request
+// DELETE /api/projects/[projectId]/tickets/[ticketId] - Delete ticket
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -217,32 +217,32 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = await params;
+    const { projectId, ticketId } = await params;
 
-    const existingRequest = await prisma.request.findUnique({
-      where: { id: requestId },
+    const existingTicket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: { project: true },
     });
 
-    if (!existingRequest || existingRequest.projectId !== projectId) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!existingTicket || existingTicket.projectId !== projectId) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    // Only owner can delete requests
-    if (existingRequest.project.ownerId !== session.user.id) {
+    // Only owner can delete tickets
+    if (existingTicket.project.ownerId !== session.user.id) {
       return NextResponse.json(
-        { error: "Only the project owner can delete requests" },
+        { error: "Only the project owner can delete tickets" },
         { status: 403 }
       );
     }
 
-    await prisma.request.delete({
-      where: { id: requestId },
+    await prisma.ticket.delete({
+      where: { id: ticketId },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting request:", error);
+    console.error("Error deleting ticket:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -9,7 +9,7 @@ import { Brain, Plus } from "lucide-react";
 
 interface ProjectWithCounts extends Project {
   _count: {
-    requests: number;
+    tickets: number;
     members: number;
   };
 }

@@ -57,7 +57,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           },
         },
       },
-      requests: {
+      tickets: {
         orderBy: [{ createdAt: "desc" }],
         include: {
           assignedTo: {
@@ -72,7 +72,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       },
       _count: {
         select: {
-          requests: true,
+          tickets: true,
           members: true,
         },
       },
@@ -109,7 +109,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               Owner: {project.owner.name} ({project.owner.email})
             </p>
             <p>Members: {project._count.members}</p>
-            <p>Requests: {project._count.requests}</p>
+            <p>Tickets: {project._count.tickets}</p>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <BoardWrapper
               projectId={project.id}
               columns={(project.columns as any) || []}
-              requests={(project.requests as any) || []}
+              tickets={(project.tickets as any) || []}
               members={(project.members as any) || []}
             />
           </TabsContent>

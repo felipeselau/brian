@@ -22,7 +22,7 @@ interface Comment {
 
 interface CommentsSectionProps {
   projectId: string;
-  requestId: string;
+  ticketId: string;
   comments: Comment[];
   currentUserId: string;
   isOwner: boolean;
@@ -30,7 +30,7 @@ interface CommentsSectionProps {
 
 export function CommentsSection({
   projectId,
-  requestId,
+  ticketId,
   comments: initialComments,
   currentUserId,
   isOwner,
@@ -47,7 +47,7 @@ export function CommentsSection({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/comments`, {
+      const response = await fetch(`/api/projects/${projectId}/tickets/${ticketId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newComment }),
@@ -74,7 +74,7 @@ export function CommentsSection({
     if (!confirm("Delete this comment?")) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/comments?commentId=${commentId}`, {
+      const response = await fetch(`/api/projects/${projectId}/tickets/${ticketId}/comments?commentId=${commentId}`, {
         method: "DELETE",
       });
 

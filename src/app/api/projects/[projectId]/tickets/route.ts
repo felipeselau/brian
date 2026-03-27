@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
-const createRequestSchema = z.object({
+const createTicketSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   status: z.string().optional(),
@@ -11,7 +11,7 @@ const createRequestSchema = z.object({
   estimatedHours: z.number().optional(),
 });
 
-const updateRequestSchema = z.object({
+const updateTicketSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
   status: z.string().optional(),
@@ -20,7 +20,7 @@ const updateRequestSchema = z.object({
   loggedHours: z.number().optional(),
 });
 
-// GET /api/projects/[projectId]/requests - List all requests for project
+// GET /api/projects/[projectId]/tickets - List all tickets for project
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -57,7 +57,7 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const requests = await prisma.request.findMany({
+    const tickets = await prisma.ticket.findMany({
       where: { projectId },
       include: {
         assignedTo: {
@@ -98,9 +98,9 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ requests });
+    return NextResponse.json({ tickets });
   } catch (error) {
-    console.error("Error fetching requests:", error);
+    console.error("Error fetching tickets:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -108,7 +108,7 @@ export async function GET(
   }
 }
 
-// POST /api/projects/[projectId]/requests - Create new request
+// POST /api/projects/[projectId]/tickets - Create new ticket
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -122,7 +122,7 @@ export async function POST(
 
     const { projectId } = await params;
     const body = await req.json();
-    const validatedData = createRequestSchema.parse(body);
+    const validatedData = createTicketSchema.parse(body);
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -150,8 +150,8 @@ export async function POST(
     // Get status from validated data or default to BACKLOG
     const status = validatedData.status?.toUpperCase() || "BACKLOG";
 
-    // Create request
-    const request = await prisma.request.create({
+    // Create ticket
+    const ticket = await prisma.ticket.create({
       data: {
         title: validatedData.title,
         description: validatedData.description || null,
@@ -190,7 +190,7 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ request }, { status: 201 });
+    return NextResponse.json({ ticket }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
       const zodError = error as any;
@@ -200,7 +200,7 @@ export async function POST(
       );
     }
 
-    console.error("Error creating request:", error);
+    console.error("Error creating ticket:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

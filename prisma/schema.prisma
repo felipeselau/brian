@@ -27,7 +27,7 @@ enum ProjectStatus {
   ARCHIVED
 }
 
-enum RequestStatus {
+enum TicketStatus {
   BACKLOG
   IN_PROGRESS
   REVIEW
@@ -51,8 +51,8 @@ model User {
   // Relations
   ownedProjects    Project[]        @relation("ProjectOwner")
   projectMembers   ProjectMember[]
-  assignedRequests Request[]        @relation("AssignedRequests")
-  createdRequests  Request[]        @relation("CreatedRequests")
+  assignedTickets  Ticket[]         @relation("AssignedTickets")
+  createdTickets   Ticket[]         @relation("CreatedTickets")
   comments         Comment[]
   sentInvites      Invite[]         @relation("SentInvites")
   
@@ -76,7 +76,7 @@ model Project {
   owner       User          @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   
   members     ProjectMember[]
-  requests    Request[]
+  tickets     Ticket[]
   invites     Invite[]
   
   createdAt   DateTime      @default(now())
@@ -106,20 +106,20 @@ model ProjectMember {
   @@map("project_members")
 }
 
-model Request {
+model Ticket {
   id             String        @id @default(cuid())
   title          String
   description    String?       @db.Text
-  status         RequestStatus @default(BACKLOG)
+  status         TicketStatus  @default(BACKLOG)
   
   projectId      String
   project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   assignedToId   String?
-  assignedTo     User?         @relation("AssignedRequests", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo     User?         @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
   
   createdById    String
-  createdBy      User          @relation("CreatedRequests", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy      User          @relation("CreatedTickets", fields: [createdById], references: [id], onDelete: Cascade)
   
   estimatedHours Float?
   loggedHours    Float         @default(0)
@@ -141,15 +141,15 @@ model Request {
   @@index([projectId])
   @@index([assignedToId])
   @@index([status])
-  @@map("requests")
+  @@map("tickets")
 }
 
 model Comment {
   id        String   @id @default(cuid())
   content   String   @db.Text
   
-  requestId String
-  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -157,7 +157,7 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@index([requestId])
+  @@index([ticketId])
   @@index([userId])
   @@map("comments")
 }
@@ -169,12 +169,12 @@ model Attachment {
   size      Int?
   type      String?
   
-  requestId String
-  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
   
-  @@index([requestId])
+  @@index([ticketId])
   @@map("attachments")
 }
 

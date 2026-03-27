@@ -7,10 +7,10 @@ const approvalSchema = z.object({
   type: z.enum(["owner", "client"]),
 });
 
-// POST /api/projects/[projectId]/requests/[requestId]/approve
+// POST /api/projects/[projectId]/tickets/[ticketId]/approve
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -19,12 +19,12 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = await params;
+    const { projectId, ticketId } = await params;
     const body = await req.json();
     const { type } = approvalSchema.parse(body);
 
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: {
         project: {
           include: {
@@ -34,20 +34,20 @@ export async function POST(
       },
     });
 
-    if (!request || request.projectId !== projectId) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket || ticket.projectId !== projectId) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Must be in REVIEW status
-    if (request.status !== "REVIEW") {
+    if (ticket.status !== "REVIEW") {
       return NextResponse.json(
-        { error: "Request must be in REVIEW status to approve" },
+        { error: "Ticket must be in REVIEW status to approve" },
         { status: 400 }
       );
     }
 
-    const isProjectOwner = request.project.ownerId === session.user.id;
-    const isClientMember = request.project.members.some(
+    const isProjectOwner = ticket.project.ownerId === session.user.id;
+    const isClientMember = ticket.project.members.some(
       (m) => m.userId === session.user.id && m.role === "CLIENT"
     );
 
@@ -67,7 +67,7 @@ export async function POST(
     }
 
     // Get current approvals
-    const currentApprovals = (request.approvals as any) || {};
+    const currentApprovals = (ticket.approvals as any) || {};
 
     // For client approval, owner must approve first
     if (type === "client" && !currentApprovals.owner) {
@@ -84,14 +84,14 @@ export async function POST(
     };
 
     // Check if all approvals are done → move to DONE
-    const currentStatus = request.status;
+    const currentStatus = ticket.status;
     let newStatus: "REVIEW" | "DONE" = "REVIEW";
     if (newApprovals.owner && newApprovals.client) {
       newStatus = "DONE";
     }
 
     // Update lifecycle log
-    const lifecycleLog = (request.lifecycleLog as any[]) || [];
+    const lifecycleLog = (ticket.lifecycleLog as any[]) || [];
     lifecycleLog.push({
       from: currentStatus,
       to: newStatus,
@@ -106,15 +106,15 @@ export async function POST(
       lifecycleLog,
     };
 
-    const updatedRequest = await prisma.request.update({
-      where: { id: requestId },
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticketId },
       data: updateData,
     });
 
-    return NextResponse.json({ request: updatedRequest });
+    return NextResponse.json({ ticket: updatedTicket });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid ticket" }, { status: 400 });
     }
 
     console.error("Error approving:", error);

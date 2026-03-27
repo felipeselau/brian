@@ -59,7 +59,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
       },
       _count: {
         select: {
-          requests: true,
+          tickets: true,
           members: true,
         },
       },

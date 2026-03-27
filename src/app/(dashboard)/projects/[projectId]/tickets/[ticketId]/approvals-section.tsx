@@ -8,13 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X, Loader2 } from "lucide-react";
 
 interface ApprovalsSectionProps {
-  requestId: string;
+  ticketId: string;
   projectId: string;
   approvals: {
     owner?: boolean;
     client?: boolean;
   };
-  requestStatus: string;
+  ticketStatus: string;
   isOwner: boolean;
   isClient: boolean;
   clients: {
@@ -26,10 +26,10 @@ interface ApprovalsSectionProps {
 }
 
 export function ApprovalsSection({
-  requestId,
+  ticketId,
   projectId,
   approvals,
-  requestStatus,
+  ticketStatus,
   isOwner,
   isClient,
   clients,
@@ -42,7 +42,7 @@ export function ApprovalsSection({
   const handleApprove = async (type: "owner" | "client") => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/approve`, {
+      const response = await fetch(`/api/projects/${projectId}/tickets/${ticketId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type }),
@@ -53,8 +53,8 @@ export function ApprovalsSection({
         throw new Error(error.error || "Failed to approve");
       }
 
-      const { request } = await response.json();
-      setLocalApprovals(request.approvals || {});
+      const { ticket } = await response.json();
+      setLocalApprovals(ticket.approvals || {});
       toast.success(`${type === "owner" ? "Owner" : "Client"} approved!`);
       router.refresh();
     } catch (error) {
@@ -68,7 +68,7 @@ export function ApprovalsSection({
   const handleReject = async (type: "owner" | "client") => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/reject`, {
+      const response = await fetch(`/api/projects/${projectId}/tickets/${ticketId}/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type }),
@@ -79,7 +79,7 @@ export function ApprovalsSection({
         throw new Error(error.error || "Failed to reject");
       }
 
-      toast.success("Request rejected!");
+      toast.success("Ticket rejected!");
       router.refresh();
     } catch (error) {
       console.error("Error rejecting:", error);
@@ -89,7 +89,7 @@ export function ApprovalsSection({
     }
   };
 
-  const isInReview = requestStatus === "REVIEW";
+  const isInReview = ticketStatus === "REVIEW";
   const ownerApproved = localApprovals?.owner === true;
   const clientApproved = localApprovals?.client === true;
   const allApproved = ownerApproved && clientApproved;
@@ -99,18 +99,18 @@ export function ApprovalsSection({
       <div className="rounded-lg border p-6">
         <h3 className="font-semibold mb-4">Approval Status</h3>
 
-        {!isInReview && requestStatus !== "DONE" && (
+        {!isInReview && ticketStatus !== "DONE" && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-yellow-800">
-              This request is not in review status. Mark the request as Done to start approval workflow.
+              This ticket is not in review status. Mark the ticket as Done to start approval workflow.
             </p>
           </div>
         )}
 
-        {requestStatus === "DONE" && allApproved && (
+        {ticketStatus === "DONE" && allApproved && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-green-800">
-              ✓ This request has been fully approved and completed!
+              ✓ This ticket has been fully approved and completed!
             </p>
           </div>
         )}
@@ -199,7 +199,7 @@ export function ApprovalsSection({
 
         {isInReview && !isOwner && !isClient && (
           <p className="text-sm text-muted-foreground mt-4 text-center">
-            Only project owner and clients can approve requests in review.
+            Only project owner and clients can approve tickets in review.
           </p>
         )}
 

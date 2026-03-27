@@ -56,7 +56,7 @@ export async function GET(req: Request) {
         },
         _count: {
           select: {
-            requests: true,
+            tickets: true,
           },
         },
       },

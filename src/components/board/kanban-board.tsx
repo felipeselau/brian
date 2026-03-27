@@ -19,14 +19,14 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BoardColumn } from "./board-column";
-import { RequestCard } from "./request-card";
-import { RequestStatus } from "@prisma/client";
+import { TicketCard } from "./ticket-card";
+import { TicketStatus } from "@prisma/client";
 
-interface Request {
+interface Ticket {
   id: string;
   title: string;
   description: string | null;
-  status: RequestStatus;
+  status: TicketStatus;
   estimatedHours: number | null;
   loggedHours: number;
   assignedTo: {
@@ -46,8 +46,8 @@ interface Column {
 interface KanbanBoardProps {
   projectId: string;
   initialColumns: Column[];
-  initialRequests: Request[];
-  onAddRequest?: (columnId: string) => void;
+  initialTickets: Ticket[];
+  onAddTicket?: (columnId: string) => void;
 }
 
 const statusToColumnId: Record<string, string> = {
@@ -62,12 +62,12 @@ const statusToColumnId: Record<string, string> = {
 export function KanbanBoard({
   projectId,
   initialColumns,
-  initialRequests,
+  initialTickets,
 }: KanbanBoardProps) {
   const router = useRouter();
   const [columns] = useState<Column[]>(initialColumns);
-  const [requests, setRequests] = useState<Request[]>(initialRequests);
-  const [activeRequest, setActiveRequest] = useState<Request | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
+  const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -81,12 +81,12 @@ export function KanbanBoard({
   );
 
   useEffect(() => {
-    setRequests(initialRequests);
-  }, [initialRequests]);
+    setTickets(initialTickets);
+  }, [initialTickets]);
 
-  const getRequestsByColumn = (columnId: string) => {
+  const getTicketsByColumn = (columnId: string) => {
     // Map column id to status
-    const statusMap: Record<string, RequestStatus> = {
+    const statusMap: Record<string, TicketStatus> = {
       backlog: "BACKLOG",
       in_progress: "IN_PROGRESS",
       review: "REVIEW",
@@ -96,35 +96,35 @@ export function KanbanBoard({
     };
     
     const status = statusMap[columnId] || "BACKLOG";
-    return requests.filter((r) => r.status === status);
+    return tickets.filter((r) => r.status === status);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    const request = requests.find((r) => r.id === event.active.id);
-    if (request) {
-      setActiveRequest(request);
+    const ticket = tickets.find((r) => r.id === event.active.id);
+    if (ticket) {
+      setActiveTicket(ticket);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    setActiveRequest(null);
+    setActiveTicket(null);
 
     if (!over) return;
 
-    const requestId = active.id as string;
-    const request = requests.find((r) => r.id === requestId);
+    const ticketId = active.id as string;
+    const ticket = tickets.find((r) => r.id === ticketId);
     
-    if (!request) return;
+    if (!ticket) return;
 
     // Find new column from over.id
-    let newStatus: RequestStatus | null = null;
+    let newStatus: TicketStatus | null = null;
     
     // Check if dropped on a column directly
     const column = columns.find((c) => c.id === over.id);
     if (column) {
-      const statusMap: Record<string, RequestStatus> = {
+      const statusMap: Record<string, TicketStatus> = {
         backlog: "BACKLOG",
         in_progress: "IN_PROGRESS",
         review: "REVIEW",
@@ -137,20 +137,20 @@ export function KanbanBoard({
 
     // If not dropped on column, check which column contains the over element
     if (!newStatus) {
-      const overRequest = requests.find((r) => r.id === over.id);
-      if (overRequest) {
-        newStatus = overRequest.status;
+      const overTicket = tickets.find((r) => r.id === over.id);
+      if (overTicket) {
+        newStatus = overTicket.status;
       }
     }
 
     // If we found a new status and it's different, update
-    if (newStatus && newStatus !== request.status) {
+    if (newStatus && newStatus !== ticket.status) {
       try {
         const response = await fetch(`/api/projects/${projectId}/board`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            requestId,
+            ticketId,
             status: newStatus,
           }),
         });
@@ -173,33 +173,33 @@ export function KanbanBoard({
             return;
           }
           
-          throw new Error(data.error || "Failed to move request");
+          throw new Error(data.error || "Failed to move ticket");
         }
 
         // Update local state
-        setRequests((prev) =>
+        setTickets((prev) =>
           prev.map((r) =>
-            r.id === requestId ? { ...r, status: newStatus! } : r
+            r.id === ticketId ? { ...r, status: newStatus! } : r
           )
         );
 
-        toast.success("Request moved");
+        toast.success("Ticket moved");
         router.refresh();
       } catch (error) {
-        console.error("Error moving request:", error);
-        toast.error("Failed to move request");
+        console.error("Error moving ticket:", error);
+        toast.error("Failed to move ticket");
       }
     }
   };
 
-  const handleAddRequest = (columnId: string) => {
-    // This will be handled by the RequestModal
+  const handleAddTicket = (columnId: string) => {
+    // This will be handled by the TicketModal
     // For now, redirect to create
-    router.push(`/projects/${projectId}/requests/new?status=${columnId}`);
+    router.push(`/projects/${projectId}/tickets/new?status=${columnId}`);
   };
 
-  const handleRequestClick = (requestId: string) => {
-    router.push(`/projects/${projectId}/requests/${requestId}`);
+  const handleTicketClick = (ticketId: string) => {
+    router.push(`/projects/${projectId}/tickets/${ticketId}`);
   };
 
   // Sort columns by order
@@ -218,17 +218,17 @@ export function KanbanBoard({
             key={column.id}
             id={column.id}
             title={column.title}
-            requests={getRequestsByColumn(column.id)}
-            onAddRequest={() => handleAddRequest(column.id)}
-            onRequestClick={handleRequestClick}
+            tickets={getTicketsByColumn(column.id)}
+            onAddTicket={() => handleAddTicket(column.id)}
+            onTicketClick={handleTicketClick}
           />
         ))}
       </div>
 
       <DragOverlay>
-        {activeRequest ? (
+        {activeTicket ? (
           <div className="opacity-80 shadow-lg">
-            <RequestCard request={activeRequest} />
+            <TicketCard ticket={activeTicket} />
           </div>
         ) : null}
       </DragOverlay>

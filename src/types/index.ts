@@ -1,17 +1,17 @@
-import { User, Project, Request, Comment, Attachment, ProjectMember, UserRole, ProjectStatus, RequestStatus } from "@prisma/client";
+import { User, Project, Ticket, Comment, Attachment, ProjectMember, UserRole, ProjectStatus, TicketStatus } from "@prisma/client";
 
 // Re-export Prisma types
-export type { User, Project, Request, Comment, Attachment, ProjectMember };
-export { UserRole, ProjectStatus, RequestStatus };
+export type { User, Project, Ticket, Comment, Attachment, ProjectMember };
+export { UserRole, ProjectStatus, TicketStatus };
 
 // Extended types with relations
 export type ProjectWithRelations = Project & {
   owner: User;
   members: (ProjectMember & { user: User })[];
-  requests: Request[];
+  tickets: Ticket[];
 };
 
-export type RequestWithRelations = Request & {
+export type TicketWithRelations = Ticket & {
   project: Project;
   assignedTo: User | null;
   createdBy: User;
@@ -37,7 +37,7 @@ export interface ProjectSettings {
 }
 
 // Approvals
-export interface RequestApprovals {
+export interface TicketApprovals {
   owner?: boolean;
   client?: boolean;
 }
@@ -67,7 +67,7 @@ export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
 };
 
 // Default approvals
-export const DEFAULT_APPROVALS: RequestApprovals = {
+export const DEFAULT_APPROVALS: TicketApprovals = {
   owner: undefined,
   client: undefined,
 };

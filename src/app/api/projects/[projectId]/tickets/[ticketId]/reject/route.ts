@@ -7,10 +7,10 @@ const rejectSchema = z.object({
   type: z.enum(["owner", "client"]),
 });
 
-// POST /api/projects/[projectId]/requests/[requestId]/reject
+// POST /api/projects/[projectId]/tickets/[ticketId]/reject
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string; requestId: string }> }
+  { params }: { params: Promise<{ projectId: string; ticketId: string }> }
 ) {
   try {
     const session = await auth();
@@ -19,12 +19,12 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = await params;
+    const { projectId, ticketId } = await params;
     const body = await req.json();
     const { type } = rejectSchema.parse(body);
 
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
       include: {
         project: {
           include: {
@@ -34,20 +34,20 @@ export async function POST(
       },
     });
 
-    if (!request || request.projectId !== projectId) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    if (!ticket || ticket.projectId !== projectId) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Must be in REVIEW status
-    if (request.status !== "REVIEW") {
+    if (ticket.status !== "REVIEW") {
       return NextResponse.json(
-        { error: "Request must be in REVIEW status to reject" },
+        { error: "Ticket must be in REVIEW status to reject" },
         { status: 400 }
       );
     }
 
-    const isProjectOwner = request.project.ownerId === session.user.id;
-    const isClientMember = request.project.members.some(
+    const isProjectOwner = ticket.project.ownerId === session.user.id;
+    const isClientMember = ticket.project.members.some(
       (m) => m.userId === session.user.id && m.role === "CLIENT"
     );
 
@@ -67,17 +67,17 @@ export async function POST(
     }
 
     // Update lifecycle log
-    const lifecycleLog = (request.lifecycleLog as any[]) || [];
+    const lifecycleLog = (ticket.lifecycleLog as any[]) || [];
     lifecycleLog.push({
-      from: request.status,
+      from: ticket.status,
       to: "IN_PROGRESS", // Send back to in progress after rejection
       by: session.user.id,
       at: new Date().toISOString(),
       action: `rejected_${type}`,
     });
 
-    const updatedRequest = await prisma.request.update({
-      where: { id: requestId },
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticketId },
       data: {
         status: "IN_PROGRESS" as any,
         approvals: {} as any, // Reset approvals
@@ -85,10 +85,10 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ request: updatedRequest });
+    return NextResponse.json({ ticket: updatedTicket });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid ticket" }, { status: 400 });
     }
 
     console.error("Error rejecting:", error);

@@ -40,12 +40,12 @@ export async function GET(
             },
           },
         },
-        requests: {
+        tickets: {
           orderBy: { createdAt: "desc" },
         },
         _count: {
           select: {
-            requests: true,
+            tickets: true,
             members: true,
           },
         },
@@ -133,7 +133,7 @@ export async function PATCH(
         },
         _count: {
           select: {
-            requests: true,
+            tickets: true,
             members: true,
           },
         },

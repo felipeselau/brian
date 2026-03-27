@@ -15,7 +15,7 @@ import { MoreVertical, Users, ListTodo, Archive } from "lucide-react";
 
 interface ProjectWithCounts extends Project {
   _count: {
-    requests: number;
+    tickets: number;
     members: number;
   };
 }
@@ -96,7 +96,7 @@ export function ProjectCard({
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <ListTodo className="h-4 w-4" />
-            <span>{project._count.requests} requests</span>
+            <span>{project._count.tickets} tickets</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />

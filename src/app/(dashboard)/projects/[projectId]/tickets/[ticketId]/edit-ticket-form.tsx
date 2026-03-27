@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { RequestStatus } from "@prisma/client";
+import { TicketStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,11 +29,11 @@ interface Member {
   };
 }
 
-interface Request {
+interface Ticket {
   id: string;
   title: string;
   description: string | null;
-  status: RequestStatus;
+  status: TicketStatus;
   estimatedHours: number | null;
   loggedHours: number;
   assignedTo: {
@@ -52,8 +52,8 @@ interface Request {
   };
 }
 
-interface EditRequestFormProps {
-  request: Request;
+interface EditTicketFormProps {
+  ticket: Ticket;
   projectId: string;
   members: Member[];
   isOwner: boolean;
@@ -69,23 +69,23 @@ const statusOptions = [
   { value: "WAITING", label: "Waiting" },
 ];
 
-export function EditRequestForm({
-  request,
+export function EditTicketForm({
+  ticket,
   projectId,
   members,
   isOwner,
   canEdit,
-}: EditRequestFormProps) {
+}: EditTicketFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
-    title: request.title,
-    description: request.description || "",
-    status: request.status,
-    assignedToId: request.assignedTo?.id || "",
-    estimatedHours: request.estimatedHours?.toString() || "",
-    loggedHours: request.loggedHours?.toString() || "0",
+    title: ticket.title,
+    description: ticket.description || "",
+    status: ticket.status,
+    assignedToId: ticket.assignedTo?.id || "",
+    estimatedHours: ticket.estimatedHours?.toString() || "",
+    loggedHours: ticket.loggedHours?.toString() || "0",
   });
 
   const workers = members.filter((m) => m.role === "WORKER");
@@ -95,12 +95,12 @@ export function EditRequestForm({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/requests/${request.id}`, {
+      const response = await fetch(`/api/projects/${projectId}/tickets/${ticket.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          assignedToId: formData.assignedToId === "__unassigned__" ? null : formData.assignedToId,
+          assignedToId: formData.assignedToId === "__unassigned__" || formData.assignedToId === "" ? null : formData.assignedToId,
           estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
           loggedHours: formData.loggedHours ? parseFloat(formData.loggedHours) : undefined,
         }),
@@ -108,15 +108,15 @@ export function EditRequestForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update request");
+        throw new Error(error.error || "Failed to update ticket");
       }
 
-      toast.success("Request updated successfully!");
+      toast.success("Ticket updated successfully!");
       router.refresh();
     } catch (error) {
-      console.error("Error updating request:", error);
+      console.error("Error updating ticket:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update request"
+        error instanceof Error ? error.message : "Failed to update ticket"
       );
     } finally {
       setIsLoading(false);
@@ -124,28 +124,28 @@ export function EditRequestForm({
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) {
+    if (!confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) {
       return;
     }
 
     setIsDeleting(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/requests/${request.id}`, {
+      const response = await fetch(`/api/projects/${projectId}/tickets/${ticket.id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to delete request");
+        throw new Error(error.error || "Failed to delete ticket");
       }
 
-      toast.success("Request deleted successfully!");
+      toast.success("Ticket deleted successfully!");
       router.push(`/projects/${projectId}`);
     } catch (error) {
-      console.error("Error deleting request:", error);
+      console.error("Error deleting ticket:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete request"
+        error instanceof Error ? error.message : "Failed to delete ticket"
       );
     } finally {
       setIsDeleting(false);
@@ -180,7 +180,7 @@ export function EditRequestForm({
           <Label htmlFor="status">Status</Label>
           <Select
             value={formData.status}
-            onValueChange={(v) => setFormData({ ...formData, status: v as RequestStatus })}
+            onValueChange={(v) => setFormData({ ...formData, status: v as TicketStatus })}
             disabled={!canEdit || isLoading}
           >
             <SelectTrigger>
@@ -249,7 +249,7 @@ export function EditRequestForm({
       <div className="flex items-center justify-between pt-4 border-t">
         <div>
           <p className="text-sm text-muted-foreground">
-            Created by: {request.createdBy.name || request.createdBy.email}
+            Created by: {ticket.createdBy.name || ticket.createdBy.email}
           </p>
         </div>
         <div className="flex gap-2">

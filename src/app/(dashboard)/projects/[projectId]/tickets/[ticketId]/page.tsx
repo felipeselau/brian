@@ -5,13 +5,13 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/ui/back-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RequestStatus } from "@prisma/client";
-import { EditRequestForm } from "./edit-request-form";
-import { CommentsSection } from "@/components/requests/comments-section";
-import { AttachmentsSection } from "@/components/requests/attachments-section";
+import { TicketStatus } from "@prisma/client";
+import { EditTicketForm } from "./edit-ticket-form";
+import { CommentsSection } from "@/components/tickets/comments-section";
+import { AttachmentsSection } from "@/components/tickets/attachments-section";
 import { ApprovalsSection } from "./approvals-section";
 
-const statusColors: Record<RequestStatus, string> = {
+const statusColors: Record<TicketStatus, string> = {
   BACKLOG: "bg-gray-500",
   IN_PROGRESS: "bg-blue-500",
   REVIEW: "bg-yellow-500",
@@ -20,24 +20,24 @@ const statusColors: Record<RequestStatus, string> = {
   WAITING: "bg-purple-500",
 };
 
-interface RequestPageProps {
+interface TicketPageProps {
   params: Promise<{
     projectId: string;
-    requestId: string;
+    ticketId: string;
   }>;
 }
 
-export default async function RequestPage({ params }: RequestPageProps) {
+export default async function TicketPage({ params }: TicketPageProps) {
   const session = await auth();
 
   if (!session?.user?.id) {
     redirect("/login");
   }
 
-  const { projectId, requestId } = await params;
+  const { projectId, ticketId } = await params;
 
-  const request = await prisma.request.findUnique({
-    where: { id: requestId },
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
     include: {
       project: {
         include: {
@@ -101,15 +101,15 @@ export default async function RequestPage({ params }: RequestPageProps) {
     },
   });
 
-  if (!request || request.projectId !== projectId) {
+  if (!ticket || ticket.projectId !== projectId) {
     notFound();
   }
 
-  const isOwner = request.project.ownerId === session.user.id;
-  const isMember = request.project.members.some(
+  const isOwner = ticket.project.ownerId === session.user.id;
+  const isMember = ticket.project.members.some(
     (m) => m.userId === session.user.id
   );
-  const isClient = request.project.members.some(
+  const isClient = ticket.project.members.some(
     (m) => m.userId === session.user.id && m.role === "CLIENT"
   );
 
@@ -117,7 +117,7 @@ export default async function RequestPage({ params }: RequestPageProps) {
     redirect("/dashboard");
   }
 
-  const members = request.project.members.map((m) => ({
+  const members = ticket.project.members.map((m) => ({
     id: m.id,
     role: m.role,
     user: m.user,
@@ -132,13 +132,13 @@ export default async function RequestPage({ params }: RequestPageProps) {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold">{request.title}</h1>
-              <Badge className={statusColors[request.status]} variant="default">
-                {request.status}
+              <h1 className="text-2xl font-bold">{ticket.title}</h1>
+              <Badge className={statusColors[ticket.status]} variant="default">
+                {ticket.status}
               </Badge>
             </div>
             <p className="text-muted-foreground">
-              in {request.project.title}
+              in {ticket.project.title}
             </p>
           </div>
           <BackButton />
@@ -148,44 +148,44 @@ export default async function RequestPage({ params }: RequestPageProps) {
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="approvals">
-              Approvals {request.status === "REVIEW" && " ⚠️"}
+              Approvals {ticket.status === "REVIEW" && " ⚠️"}
             </TabsTrigger>
             <TabsTrigger value="comments">
-              Comments ({request._count.comments})
+              Comments ({ticket._count.comments})
             </TabsTrigger>
             <TabsTrigger value="attachments">
-              Attachments ({request._count.attachments})
+              Attachments ({ticket._count.attachments})
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="details">
-            <EditRequestForm
-              request={request as any}
+            <EditTicketForm
+              ticket={ticket as any}
               projectId={projectId}
               members={members}
               isOwner={isOwner}
-              canEdit={isOwner || request.assignedToId === session.user.id || request.createdById === session.user.id}
+              canEdit={isOwner || ticket.assignedToId === session.user.id || ticket.createdById === session.user.id}
             />
           </TabsContent>
 
           <TabsContent value="approvals">
             <ApprovalsSection
-              requestId={request.id}
+              ticketId={ticket.id}
               projectId={projectId}
-              approvals={request.approvals as any}
-              requestStatus={request.status}
+              approvals={ticket.approvals as any}
+              ticketStatus={ticket.status}
               isOwner={isOwner}
               isClient={isClient}
               clients={clients.map(c => c.user)}
-              canEdit={isOwner || request.assignedToId === session.user.id || request.createdById === session.user.id}
+              canEdit={isOwner || ticket.assignedToId === session.user.id || ticket.createdById === session.user.id}
             />
           </TabsContent>
           
           <TabsContent value="comments">
             <CommentsSection
               projectId={projectId}
-              requestId={request.id}
-              comments={(request.comments as any) || []}
+              ticketId={ticket.id}
+              comments={(ticket.comments as any) || []}
               currentUserId={session.user.id}
               isOwner={isOwner}
             />
@@ -194,8 +194,8 @@ export default async function RequestPage({ params }: RequestPageProps) {
           <TabsContent value="attachments">
             <AttachmentsSection
               projectId={projectId}
-              requestId={request.id}
-              attachments={(request.attachments as any) || []}
+              ticketId={ticket.id}
+              attachments={(ticket.attachments as any) || []}
               isOwner={isOwner}
             />
           </TabsContent>

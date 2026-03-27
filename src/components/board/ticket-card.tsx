@@ -2,16 +2,16 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { RequestStatus } from "@prisma/client";
+import { TicketStatus } from "@prisma/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical } from "lucide-react";
 
-interface Request {
+interface Ticket {
   id: string;
   title: string;
   description: string | null;
-  status: RequestStatus;
+  status: TicketStatus;
   estimatedHours: number | null;
   loggedHours: number;
   assignedTo: {
@@ -22,12 +22,12 @@ interface Request {
   } | null;
 }
 
-interface RequestCardProps {
-  request: Request;
+interface TicketCardProps {
+  ticket: Ticket;
   onClick?: () => void;
 }
 
-const statusColors: Record<RequestStatus, string> = {
+const statusColors: Record<TicketStatus, string> = {
   BACKLOG: "bg-gray-100 border-gray-300",
   IN_PROGRESS: "bg-blue-100 border-blue-300",
   REVIEW: "bg-yellow-100 border-yellow-300",
@@ -36,7 +36,7 @@ const statusColors: Record<RequestStatus, string> = {
   WAITING: "bg-purple-100 border-purple-300",
 };
 
-export function RequestCard({ request, onClick }: RequestCardProps) {
+export function TicketCard({ ticket, onClick }: TicketCardProps) {
   const {
     attributes,
     listeners,
@@ -44,7 +44,7 @@ export function RequestCard({ request, onClick }: RequestCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: request.id });
+  } = useSortable({ id: ticket.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -70,27 +70,27 @@ export function RequestCard({ request, onClick }: RequestCardProps) {
           <GripVertical className="h-4 w-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">{request.title}</p>
-          {request.description && (
+          <p className="font-medium text-sm truncate">{ticket.title}</p>
+          {ticket.description && (
             <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-              {request.description}
+              {ticket.description}
             </p>
           )}
           
           <div className="flex items-center gap-2 mt-2">
-            {request.assignedTo && (
+            {ticket.assignedTo && (
               <Avatar className="h-5 w-5">
-                <AvatarImage src={request.assignedTo.image || undefined} />
+                <AvatarImage src={ticket.assignedTo.image || undefined} />
                 <AvatarFallback className="text-[10px]">
-                  {request.assignedTo.name?.[0] || request.assignedTo.email[0].toUpperCase()}
+                  {ticket.assignedTo.name?.[0] || ticket.assignedTo.email[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             )}
             
-            {(request.estimatedHours || request.loggedHours) && (
+            {(ticket.estimatedHours || ticket.loggedHours) && (
               <span className="text-xs text-muted-foreground">
-                {request.loggedHours}
-                {request.estimatedHours ? `/${request.estimatedHours}h` : 'h'}
+                {ticket.loggedHours}
+                {ticket.estimatedHours ? `/${ticket.estimatedHours}h` : 'h'}
               </span>
             )}
           </div>
