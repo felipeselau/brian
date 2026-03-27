@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectStatus } from "@prisma/client";
+import { ProjectSettings } from "@/components/projects/project-settings";
 
 const statusColors: Record<ProjectStatus, string> = {
   ACTIVE: "bg-green-500",
@@ -47,6 +49,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               name: true,
               email: true,
               role: true,
+              image: true,
             },
           },
         },
@@ -94,10 +97,28 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           </div>
         </div>
 
-        {/* Kanban board will be added in FASE 7-8 */}
-        <div className="rounded-lg border p-12 text-center text-muted-foreground">
-          <p>Kanban board will be implemented in Phase 7-8</p>
-        </div>
+        <Tabs defaultValue="board" className="w-full">
+          <TabsList>
+            <TabsTrigger value="board">Board</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="board">
+            {/* Kanban board will be added in Phase 7-8 */}
+            <div className="rounded-lg border p-12 text-center text-muted-foreground">
+              <p>Kanban board will be implemented in Phase 7-8</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <ProjectSettings
+              projectId={project.id}
+              members={project.members as any}
+              isOwner={isOwner}
+              currentUserId={session.user.id}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
