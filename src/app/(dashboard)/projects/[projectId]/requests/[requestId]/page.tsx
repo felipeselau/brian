@@ -4,9 +4,11 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestStatus } from "@prisma/client";
 import { EditRequestForm } from "./edit-request-form";
+import { CommentsSection } from "@/components/requests/comments-section";
+import { AttachmentsSection } from "@/components/requests/attachments-section";
 
 const statusColors: Record<RequestStatus, string> = {
   BACKLOG: "bg-gray-500",
@@ -72,6 +74,21 @@ export default async function RequestPage({ params }: RequestPageProps) {
           email: true,
         },
       },
+      comments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      },
+      attachments: true,
       _count: {
         select: {
           comments: true,
@@ -85,7 +102,6 @@ export default async function RequestPage({ params }: RequestPageProps) {
     notFound();
   }
 
-  // Check if user has access
   const isOwner = request.project.ownerId === session.user.id;
   const isMember = request.project.members.some(
     (m) => m.userId === session.user.id
@@ -121,13 +137,44 @@ export default async function RequestPage({ params }: RequestPageProps) {
           </Button>
         </div>
 
-        <EditRequestForm
-          request={request as any}
-          projectId={params.projectId}
-          members={members}
-          isOwner={isOwner}
-          canEdit={isOwner || request.assignedToId === session.user.id || request.createdById === session.user.id}
-        />
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="comments">
+              Comments ({request._count.comments})
+            </TabsTrigger>
+            <TabsTrigger value="attachments">
+              Attachments ({request._count.attachments})
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="details">
+            <EditRequestForm
+              request={request as any}
+              projectId={params.projectId}
+              members={members}
+              isOwner={isOwner}
+              canEdit={isOwner || request.assignedToId === session.user.id || request.createdById === session.user.id}
+            />
+          </TabsContent>
+          
+          <TabsContent value="comments">
+            <CommentsSection
+              requestId={request.id}
+              comments={(request.comments as any) || []}
+              currentUserId={session.user.id}
+              isOwner={isOwner}
+            />
+          </TabsContent>
+          
+          <TabsContent value="attachments">
+            <AttachmentsSection
+              requestId={request.id}
+              attachments={(request.attachments as any) || []}
+              isOwner={isOwner}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
