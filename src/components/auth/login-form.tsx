@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Brain } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -30,12 +31,12 @@ export function LoginForm() {
       if (result?.error) {
         toast.error("Invalid email or password");
       } else {
-        toast.success("Login successful!");
+        toast.success("Welcome back! Your second brain is ready.");
         router.push("/dashboard");
         router.refresh();
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Something went wrong. Try again?");
     } finally {
       setIsLoading(false);
     }
@@ -43,11 +44,16 @@ export function LoginForm() {
 
   return (
     <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Login</CardTitle>
-        <CardDescription>
-          Enter your email and password to access your account
-        </CardDescription>
+      <CardHeader className="space-y-3 items-center text-center">
+        <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-primary text-primary-foreground">
+          <Brain className="h-7 w-7" />
+        </div>
+        <div className="space-y-1">
+          <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
+          <CardDescription>
+            Your second brain is ready. Sign in to your projects.
+          </CardDescription>
+        </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -82,7 +88,7 @@ export function LoginForm() {
           <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="text-primary hover:underline">
-              Register as Owner
+              Start organizing
             </Link>
           </p>
           <p className="text-xs text-center text-muted-foreground">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Project, ProjectStatus } from "@prisma/client";
 import { ProjectCard } from "./project-card";
 import { toast } from "sonner";
+import { Brain, Plus } from "lucide-react";
 
 interface ProjectWithCounts extends Project {
   _count: {
@@ -23,7 +24,7 @@ export function ProjectList({ projects, currentUserId }: ProjectListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (projectId: string) => {
-    if (!confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
+    if (!confirm("Delete this project? This can't be undone.")) {
       return;
     }
 
@@ -39,7 +40,7 @@ export function ProjectList({ projects, currentUserId }: ProjectListProps) {
         throw new Error(error.error || "Failed to delete project");
       }
 
-      toast.success("Project deleted successfully");
+      toast.success("Project deleted");
       router.refresh();
     } catch (error) {
       console.error("Error deleting project:", error);
@@ -70,8 +71,8 @@ export function ProjectList({ projects, currentUserId }: ProjectListProps) {
 
       toast.success(
         newStatus === "ARCHIVED"
-          ? "Project archived successfully"
-          : "Project restored successfully"
+          ? "Project archived"
+          : "Project restored"
       );
       router.refresh();
     } catch (error) {
@@ -84,8 +85,23 @@ export function ProjectList({ projects, currentUserId }: ProjectListProps) {
 
   if (projects.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>No projects found. Create your first project to get started!</p>
+      <div className="text-center py-16 border-2 border-dashed rounded-xl">
+        <div className="flex justify-center mb-4">
+          <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-muted">
+            <Brain className="h-6 w-6 text-muted-foreground" />
+          </div>
+        </div>
+        <h3 className="text-lg font-semibold mb-1">Your deck is empty</h3>
+        <p className="text-muted-foreground mb-4">
+          Create your first project and let Brian organize the chaos.
+        </p>
+        <a
+          href="/projects/new"
+          className="inline-flex items-center gap-2 text-primary hover:underline"
+        >
+          <Plus className="h-4 w-4" />
+          Create your first project
+        </a>
       </div>
     );
   }

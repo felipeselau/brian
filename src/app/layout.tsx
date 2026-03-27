@@ -6,8 +6,8 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Brian - Freelance Board System",
-  description: "Project management system for freelancers and small teams",
+  title: "Brian — Your second brain for freelance projects",
+  description: "Less pain, more brain. Boards, docs, repos, and invoices — organized in one place.",
 };
 
 export default function RootLayout({

@@ -21,7 +21,7 @@ export default async function DashboardPage() {
         { ownerId: session.user.id },
         { members: { some: { userId: session.user.id } } },
       ],
-      status: "ACTIVE", // Only show active projects on dashboard
+      status: "ACTIVE",
     },
     include: {
       owner: {
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
       },
     },
     orderBy: { updatedAt: "desc" },
-    take: 6, // Limit to 6 most recent projects
+    take: 6,
   });
 
   // Get stats
@@ -101,9 +101,9 @@ export default async function DashboardPage() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <h1 className="text-3xl font-bold">Your Deck</h1>
             <p className="text-muted-foreground">
-              Welcome back, {session.user.name}!
+              Welcome back, {session.user.name}. Your second brain is ready.
             </p>
           </div>
           {session.user.role === UserRole.OWNER && <CreateProjectDialog />}
@@ -111,15 +111,15 @@ export default async function DashboardPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border p-6">
-            <h3 className="font-semibold">My Projects</h3>
+            <h3 className="font-semibold">Projects</h3>
             <p className="text-2xl font-bold mt-2">{totalProjects}</p>
           </div>
           <div className="rounded-lg border p-6">
-            <h3 className="font-semibold">Active Requests</h3>
+            <h3 className="font-semibold">Active Briefs</h3>
             <p className="text-2xl font-bold mt-2">{activeRequests}</p>
           </div>
           <div className="rounded-lg border p-6">
-            <h3 className="font-semibold">Total Hours</h3>
+            <h3 className="font-semibold">Hours Logged</h3>
             <p className="text-2xl font-bold mt-2">{totalHours.toFixed(1)}h</p>
           </div>
         </div>

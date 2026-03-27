@@ -46,7 +46,7 @@ export function CreateProjectDialog() {
 
       const project = await response.json();
 
-      toast.success("Project created successfully!");
+      toast.success("Project created! Your brain is organized.");
       setOpen(false);
       setFormData({ 
         title: "", 
@@ -75,18 +75,18 @@ export function CreateProjectDialog() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle>Create a Project</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Project Title *</Label>
+            <Label htmlFor="title">Project Name *</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              placeholder="My Awesome Project"
+              placeholder="Website Redesign"
               required
               disabled={loading}
             />
@@ -99,7 +99,7 @@ export function CreateProjectDialog() {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="Brief description of the project..."
+              placeholder="What's this project about?"
               rows={4}
               disabled={loading}
             />

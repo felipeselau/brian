@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Brain } from "lucide-react";
 
 interface InviteInfo {
   email: string;
@@ -109,10 +109,10 @@ function RegisterFormContent() {
         return;
       }
 
-      toast.success("Account created successfully!");
+      toast.success("Account created! Your second brain is ready.");
       router.push("/login");
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Something went wrong. Try again?");
     } finally {
       setIsLoading(false);
     }
@@ -142,6 +142,9 @@ function RegisterFormContent() {
             <div>
               <h3 className="text-lg font-semibold">Invalid Invite</h3>
               <p className="text-muted-foreground mt-1">{inviteError}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                The link may have expired. Ask the project owner for a new one.
+              </p>
             </div>
             <Link href="/login">
               <Button variant="outline">Go to Login</Button>
@@ -160,14 +163,14 @@ function RegisterFormContent() {
           <div className="flex flex-col items-center gap-4 text-center">
             <CheckCircle className="h-12 w-12 text-green-500" />
             <div>
-              <h3 className="text-lg font-semibold">Account Exists</h3>
+              <h3 className="text-lg font-semibold">You&apos;re in!</h3>
               <p className="text-muted-foreground mt-1">
                 An account with this email already exists. You&apos;ve been added
                 to the project.
               </p>
             </div>
             <Link href="/login">
-              <Button>Sign in to access your project</Button>
+              <Button>Sign in to your project</Button>
             </Link>
           </div>
         </CardContent>
@@ -177,21 +180,24 @@ function RegisterFormContent() {
 
   return (
     <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">
-          {inviteToken ? "Accept Invitation" : "Create Owner Account"}
-        </CardTitle>
-        <CardDescription>
-          {inviteToken ? (
-            <span>
-              You&apos;ve been invited to join{" "}
-              <strong>{inviteInfo?.project.title}</strong> as a{" "}
-              <strong>{inviteInfo?.role}</strong>
-            </span>
-          ) : (
-            "Create your owner account to get started"
-          )}
-        </CardDescription>
+      <CardHeader className="space-y-3 items-center text-center">
+        <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-primary text-primary-foreground">
+          <Brain className="h-7 w-7" />
+        </div>
+        <div className="space-y-1">
+          <CardTitle className="text-2xl font-semibold">
+            {inviteToken ? "You&apos;re invited!" : "Start organizing"}
+          </CardTitle>
+          <CardDescription>
+            {inviteToken ? (
+              <span>
+                Join <strong>{inviteInfo?.project.title}</strong> on Brian
+              </span>
+            ) : (
+              "Create your account and set up your first project in minutes."
+            )}
+          </CardDescription>
+        </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -232,7 +238,7 @@ function RegisterFormContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={isLoading || !!inviteToken} // Disable if invite sets the email
+              disabled={isLoading || !!inviteToken}
             />
             {inviteToken && (
               <p className="text-xs text-muted-foreground">
@@ -264,7 +270,7 @@ function RegisterFormContent() {
               ? "Creating account..."
               : inviteToken
               ? "Accept & Create Account"
-              : "Create Owner Account"}
+              : "Create Account"}
           </Button>
           <p className="text-sm text-center text-muted-foreground">
             Already have an account?{" "}
