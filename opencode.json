@@ -1,0 +1,57 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/mimo-v2-pro-free",
+  "autoupdate": true,
+  "mcp": {
+    "prisma": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-server-prisma"],
+      "enabled": true
+    }
+  },
+  "agent": {
+    "orchestrator": {
+      "description": "Coordena tarefas complexas delegando para agentes especializados",
+      "mode": "primary",
+      "prompt": ".opencode/agents/orchestrator.md"
+    },
+    "pm": {
+      "description": "Product Manager — prioriza tarefas, define DoR/DoD, gerencia backlog",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/pm.md",
+      "tools": {
+        "write": false,
+        "edit": false
+      }
+    },
+    "senior-coder": {
+      "description": "Desenvolvedor senior — implementa features seguindo o spec",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/senior-coder.md"
+    },
+    "code-reviewer": {
+      "description": "Revisa código buscando bugs, inconsistências e melhorias",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/code-reviewer.md",
+      "tools": {
+        "write": false,
+        "edit": false
+      }
+    },
+    "designer": {
+      "description": "Designer UI/UX — cria componentes, layouts, estiliza com Tailwind",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/designer.md"
+    },
+    "project-owner": {
+      "description": "Representa o dono do projeto — valida regras de negócio e permissões",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/project-owner.md",
+      "tools": {
+        "write": false,
+        "edit": false
+      }
+    }
+  },
+  "instructions": ["AGENTS.md"]
+}
