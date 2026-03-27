@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { put } from "@vercel/blob";
+import { uploadToR2 } from "@/lib/r2";
 
 // POST /api/user/avatar - Upload avatar
 export async function POST(req: NextRequest) {
@@ -36,16 +36,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upload to Vercel Blob
-    const filename = `avatars/${session.user.id}-${Date.now()}.${file.name.split(".").pop()}`;
-    const blob = await put(filename, file, {
-      access: "public",
-    });
+    // Convert file to buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Upload to R2
+    const ext = file.name.split(".").pop() || "jpg";
+    const key = `avatars/${session.user.id}-${Date.now()}.${ext}`;
+    const url = await uploadToR2(buffer, key, file.type);
 
     // Update user image in DB
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
-      data: { image: blob.url },
+      data: { image: url },
       select: {
         id: true,
         name: true,
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ user: updatedUser, url: blob.url });
+    return NextResponse.json({ user: updatedUser, url });
   } catch (error) {
     console.error("Error uploading avatar:", error);
     return NextResponse.json(
