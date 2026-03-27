@@ -156,7 +156,24 @@ export function KanbanBoard({
         });
 
         if (!response.ok) {
-          throw new Error("Failed to move request");
+          const data = await response.json();
+          
+          // Handle business rule violations with specific messages
+          if (data.code === "ESTIMATE_REQUIRED_BEFORE_START") {
+            toast.error("Estimate Required", {
+              description: "Add an estimate before moving to In Progress",
+            });
+            return;
+          }
+          
+          if (data.code === "ESTIMATE_REQUIRED_FOR_COMPLETION") {
+            toast.error("Estimate Required", {
+              description: "Add an estimate before moving to Review/Done",
+            });
+            return;
+          }
+          
+          throw new Error(data.error || "Failed to move request");
         }
 
         // Update local state

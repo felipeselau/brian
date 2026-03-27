@@ -141,11 +141,61 @@ export async function PATCH(
       );
     }
 
-    // Build update data
-    const updateData: any = {};
+    // Get project settings for business rules enforcement
+    const settings = (request.project.settings as { requireEstimateBeforeStart?: boolean; estimateRequired?: boolean }) || {};
+    const newStatus = validatedData.status?.toUpperCase();
 
-    if (validatedData.status) {
-      updateData.status = validatedData.status.toUpperCase();
+    // Business Rule: requireEstimateBeforeStart
+    // Cannot move to IN_PROGRESS without an estimate
+    if (
+      settings.requireEstimateBeforeStart &&
+      newStatus === "IN_PROGRESS" &&
+      request.status !== "IN_PROGRESS" &&
+      request.estimatedHours === null
+    ) {
+      return NextResponse.json(
+        { 
+          error: "Estimate required before starting work",
+          code: "ESTIMATE_REQUIRED_BEFORE_START",
+          message: "This project requires an estimate before moving requests to In Progress. Please add an estimated hours value first."
+        },
+        { status: 400 }
+      );
+    }
+
+    // Business Rule: estimateRequired
+    // Cannot move to DONE or REVIEW without an estimate
+    if (
+      settings.estimateRequired &&
+      (newStatus === "DONE" || newStatus === "REVIEW") &&
+      request.status !== "DONE" &&
+      request.status !== "REVIEW" &&
+      request.estimatedHours === null
+    ) {
+      return NextResponse.json(
+        { 
+          error: "Estimate required for completion",
+          code: "ESTIMATE_REQUIRED_FOR_COMPLETION",
+          message: "This project requires an estimate before completing requests. Please add an estimated hours value first."
+        },
+        { status: 400 }
+      );
+    }
+
+    // Build update data
+    const updateData: Record<string, unknown> = {};
+    const lifecycleLog = (request.lifecycleLog as Array<{ from: string; to: string; by: string; at: string }>) || [];
+
+    if (newStatus && newStatus !== request.status) {
+      updateData.status = newStatus;
+      // Append to lifecycle log
+      lifecycleLog.push({
+        from: request.status,
+        to: newStatus,
+        by: session.user.id,
+        at: new Date().toISOString(),
+      });
+      updateData.lifecycleLog = lifecycleLog;
     }
 
     if (validatedData.position !== undefined) {
