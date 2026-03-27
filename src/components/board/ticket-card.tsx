@@ -34,6 +34,7 @@ const statusColors: Record<TicketStatus, string> = {
   DONE: "bg-green-100 border-green-300",
   BLOCKED: "bg-red-100 border-red-300",
   WAITING: "bg-purple-100 border-purple-300",
+  ARCHIVED: "bg-gray-200 border-gray-400",
 };
 
 export function TicketCard({ ticket, onClick }: TicketCardProps) {

@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import {
+  canUserUpdateTicket,
+  canUserMoveTicket,
+  canUserSoftDeleteTicket,
+  canUserHardDeleteTicket,
+  getMemberPermissions,
+} from "@/lib/permissions";
 import { z } from "zod";
+import { TicketStatus } from "@prisma/client";
 
 const updateTicketSchema = z.object({
   title: z.string().min(1).optional(),
@@ -12,7 +20,6 @@ const updateTicketSchema = z.object({
   loggedHours: z.number().optional(),
 });
 
-// GET /api/projects/[projectId]/tickets/[ticketId] - Get single ticket
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string; ticketId: string }> }
@@ -78,6 +85,7 @@ export async function GET(
             },
           },
           orderBy: { createdAt: "desc" },
+          take: 10,
         },
         attachments: true,
         _count: {
@@ -93,7 +101,6 @@ export async function GET(
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    // Check if user has access
     const isOwner = ticket.project.ownerId === session.user.id;
     const isMember = ticket.project.members.some(
       (m) => m.userId === session.user.id
@@ -113,7 +120,6 @@ export async function GET(
   }
 }
 
-// PATCH /api/projects/[projectId]/tickets/[ticketId] - Update ticket
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string; ticketId: string }> }
@@ -137,25 +143,56 @@ export async function PATCH(
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    // Check permissions
-    const isOwner = existingTicket.project.ownerId === session.user.id;
-    const isAssigned = existingTicket.assignedToId === session.user.id;
-    const isCreator = existingTicket.createdById === session.user.id;
+    const canUpdate = await canUserUpdateTicket(
+      session.user.id,
+      existingTicket,
+      projectId
+    );
 
-    if (!isOwner && !isAssigned && !isCreator) {
+    if (!canUpdate) {
       return NextResponse.json(
         { error: "You don't have permission to update this ticket" },
         { status: 403 }
       );
     }
 
-    // Build update data
     const updateData: any = {};
-    const lifecycleLog = existingTicket.lifecycleLog as any[] || [];
+    const lifecycleLog = (existingTicket.lifecycleLog as any[]) || [];
 
-    // Handle status change
     if (body.status && body.status.toUpperCase() !== existingTicket.status) {
-      const newStatus = body.status.toUpperCase();
+      const newStatus = body.status.toUpperCase() as TicketStatus;
+
+      const canMove = await canUserMoveTicket(
+        session.user.id,
+        existingTicket,
+        projectId,
+        existingTicket.status,
+        newStatus
+      );
+
+      if (!canMove) {
+        const memberPerms = await getMemberPermissions(session.user.id, projectId);
+        
+        if (memberPerms.role === "CLIENT") {
+          return NextResponse.json(
+            { error: "Clients can only move tickets from review to done" },
+            { status: 403 }
+          );
+        }
+        
+        if (memberPerms.role === "WORKER") {
+          return NextResponse.json(
+            { error: "You cannot move tickets to this status" },
+            { status: 403 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: "You cannot move tickets to this status" },
+          { status: 403 }
+        );
+      }
+
       updateData.status = newStatus;
       lifecycleLog.push({
         from: existingTicket.status,
@@ -205,7 +242,6 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/projects/[projectId]/tickets/[ticketId] - Delete ticket
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string; ticketId: string }> }
@@ -228,19 +264,40 @@ export async function DELETE(
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    // Only owner can delete tickets
-    if (existingTicket.project.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Only the project owner can delete tickets" },
-        { status: 403 }
-      );
+    const canHardDelete = await canUserHardDeleteTicket(session.user.id, projectId);
+    const canSoftDelete = await canUserSoftDeleteTicket(session.user.id, existingTicket, projectId);
+
+    if (canHardDelete) {
+      await prisma.ticket.delete({
+        where: { id: ticketId },
+      });
+      return NextResponse.json({ success: true, deleted: "hard" });
     }
 
-    await prisma.ticket.delete({
-      where: { id: ticketId },
-    });
+    if (canSoftDelete) {
+      const lifecycleLog = (existingTicket.lifecycleLog as any[]) || [];
+      lifecycleLog.push({
+        action: "ARCHIVED",
+        from: existingTicket.status,
+        to: "ARCHIVED",
+        by: session.user.id,
+        at: new Date().toISOString(),
+      });
 
-    return NextResponse.json({ success: true });
+      await prisma.ticket.update({
+        where: { id: ticketId },
+        data: {
+          status: "ARCHIVED",
+          lifecycleLog,
+        },
+      });
+      return NextResponse.json({ success: true, deleted: "soft" });
+    }
+
+    return NextResponse.json(
+      { error: "You don't have permission to delete this ticket" },
+      { status: 403 }
+    );
   } catch (error) {
     console.error("Error deleting ticket:", error);
     return NextResponse.json(

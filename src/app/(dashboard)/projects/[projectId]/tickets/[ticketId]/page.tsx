@@ -18,6 +18,7 @@ const statusColors: Record<TicketStatus, string> = {
   DONE: "bg-green-500",
   BLOCKED: "bg-red-500",
   WAITING: "bg-purple-500",
+  ARCHIVED: "bg-gray-400",
 };
 
 interface TicketPageProps {

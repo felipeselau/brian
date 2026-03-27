@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { canUserMoveTicket } from "@/lib/permissions";
 import { z } from "zod";
+import { TicketStatus } from "@prisma/client";
 
 const moveTicketSchema = z.object({
   ticketId: z.string(),
@@ -129,21 +131,27 @@ export async function PATCH(
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    // Check permissions: owner, assigned worker, or createdBy can move
-    const isOwner = ticket.project.ownerId === session.user.id;
-    const isAssigned = ticket.assignedToId === session.user.id;
-    const isCreator = ticket.createdById === session.user.id;
+    const newStatus = validatedData.status?.toUpperCase() as TicketStatus | undefined;
 
-    if (!isOwner && !isAssigned && !isCreator) {
-      return NextResponse.json(
-        { error: "You don't have permission to move this ticket" },
-        { status: 403 }
+    if (newStatus && newStatus !== ticket.status) {
+      const canMove = await canUserMoveTicket(
+        session.user.id,
+        ticket,
+        projectId,
+        ticket.status,
+        newStatus
       );
+
+      if (!canMove) {
+        return NextResponse.json(
+          { error: "You don't have permission to move this ticket to this status" },
+          { status: 403 }
+        );
+      }
     }
 
     // Get project settings for business rules enforcement
     const settings = (ticket.project.settings as { requireEstimateBeforeStart?: boolean; estimateRequired?: boolean }) || {};
-    const newStatus = validatedData.status?.toUpperCase();
 
     // Business Rule: requireEstimateBeforeStart
     // Cannot move to IN_PROGRESS without an estimate

@@ -12,6 +12,12 @@ const removeMemberSchema = z.object({
   userId: z.string(),
 });
 
+const updateMemberSchema = z.object({
+  userId: z.string(),
+  canCreateTickets: z.boolean().optional(),
+  role: z.enum(["WORKER", "CLIENT"]).optional(),
+});
+
 // GET /api/projects/[projectId]/members - List project members
 export async function GET(
   req: NextRequest,
@@ -233,6 +239,100 @@ export async function DELETE(
     }
 
     console.error("Error removing member:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { projectId } = await params;
+    const body = await req.json();
+    const validatedData = updateMemberSchema.parse(body);
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    if (project.ownerId !== session.user.id) {
+      return NextResponse.json(
+        { error: "Only the project owner can update member permissions" },
+        { status: 403 }
+      );
+    }
+
+    const existingMember = await prisma.projectMember.findUnique({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId: validatedData.userId,
+        },
+      },
+    });
+
+    if (!existingMember) {
+      return NextResponse.json(
+        { error: "User is not a member of this project" },
+        { status: 404 }
+      );
+    }
+
+    const updateData: { canCreateTickets?: boolean; role?: "WORKER" | "CLIENT" } = {};
+
+    if (validatedData.canCreateTickets !== undefined) {
+      updateData.canCreateTickets = validatedData.canCreateTickets;
+    }
+
+    if (validatedData.role !== undefined) {
+      updateData.role = validatedData.role;
+    }
+
+    const updatedMember = await prisma.projectMember.update({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId: validatedData.userId,
+        },
+      },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({ member: updatedMember });
+  } catch (error) {
+    if (error instanceof Error && error.name === "ZodError") {
+      return NextResponse.json(
+        { error: "Invalid request data", details: error },
+        { status: 400 }
+      );
+    }
+
+    console.error("Error updating member:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getMemberPermissions } from "@/lib/permissions";
 import { z } from "zod";
 
 const createTicketSchema = z.object({
@@ -132,25 +133,40 @@ export async function POST(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Check if user has access (owner or member)
-    const isOwner = project.ownerId === session.user.id;
-    const isMember = await prisma.projectMember.findUnique({
-      where: {
-        projectId_userId: {
-          projectId,
-          userId: session.user.id,
-        },
-      },
-    });
-
-    if (!isOwner && !isMember) {
+    const memberPermissions = await getMemberPermissions(session.user.id, projectId);
+    
+    if (!memberPermissions.role) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get status from validated data or default to BACKLOG
+    if (memberPermissions.role === "WORKER" && !memberPermissions.canCreateTickets) {
+      return NextResponse.json(
+        { error: "Workers need permission to create tickets in this project" },
+        { status: 403 }
+      );
+    }
+
+    const isClient = memberPermissions.role === "CLIENT";
+    const isOwner = memberPermissions.role === "OWNER";
+
+    if (isClient) {
+      if (validatedData.status && validatedData.status.toUpperCase() !== "BACKLOG") {
+        return NextResponse.json(
+          { error: "Clients can only create tickets in backlog" },
+          { status: 403 }
+        );
+      }
+    }
+
     const status = validatedData.status?.toUpperCase() || "BACKLOG";
 
-    // Create ticket
+    if (isClient && status !== "BACKLOG") {
+      return NextResponse.json(
+        { error: "Clients can only create tickets in backlog" },
+        { status: 403 }
+      );
+    }
+
     const ticket = await prisma.ticket.create({
       data: {
         title: validatedData.title,
@@ -160,7 +176,7 @@ export async function POST(
         createdById: session.user.id,
         assignedToId: validatedData.assignedToId || null,
         estimatedHours: validatedData.estimatedHours || null,
-        // Initialize approvals and lifecycle
+        isClientRequest: isClient,
         approvals: {},
         lifecycleLog: [
           {
