@@ -100,6 +100,7 @@ export function EditRequestForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          assignedToId: formData.assignedToId === "__unassigned__" ? null : formData.assignedToId,
           estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
           loggedHours: formData.loggedHours ? parseFloat(formData.loggedHours) : undefined,
         }),
@@ -206,7 +207,7 @@ export function EditRequestForm({
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
+              <SelectItem value="__unassigned__">Unassigned</SelectItem>
               {workers.map((w) => (
                 <SelectItem key={w.user.id} value={w.user.id}>
                   {w.user.name || w.user.email}

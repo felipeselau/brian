@@ -69,6 +69,7 @@ export function CreateRequestDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          assignedToId: formData.assignedToId === "__unassigned__" ? undefined : formData.assignedToId,
           estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
         }),
       });
@@ -166,7 +167,7 @@ export function CreateRequestDialog({
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="__unassigned__">Unassigned</SelectItem>
                   {workers.map((worker) => (
                     <SelectItem key={worker.user.id} value={worker.user.id}>
                       {worker.user.name || worker.user.email}
