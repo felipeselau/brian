@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Polish & Quality
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-03-27T14:45:55.625Z"
-last_activity: 2026-03-27 -- Phase 11 execution started
+stopped_at: Plan 11-01 complete (Next.js 16 upgrade)
+last_updated: "2026-03-27T14:53:29.000Z"
+last_activity: 2026-03-27 -- Plan 11-01 executed (Next.js 14→16)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
-  percent: 50
+  completed_plans: 1
+  percent: 52
 ---
 
 # State: Brian — Freelance Board System
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 ## Current Position
 
 Phase: 11 (Dependency Upgrades) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 11
-Last activity: 2026-03-27 -- Phase 11 execution started
+Plan: 1 of 2 — COMPLETE ✅
+Status: Plan 11-01 executed successfully
+Last activity: 2026-03-27 -- Next.js 14→16 upgrade complete
 
-Progress: [██████████░░░░░░░░░░] 50% (v1.0 complete, v1.1 starting)
+Progress: [███████████░░░░░░░░░] 52% (Plan 11-01 complete)
 
 ## Milestone Status
 
@@ -56,6 +56,9 @@ Progress: [██████████░░░░░░░░░░] 50% (v1
 
 ## Recent Activity
 
+- 2026-03-27: Plan 11-01 complete — Next.js 14.2.18→16.2.1 upgrade successful
+- 2026-03-27: Fixed async params breaking change (Next.js 15+)
+- 2026-03-27: Updated npm scripts (removed lint, added typecheck)
 - 2026-03-27: v1.1 roadmap created (Phases 11-14)
 - 2026-03-27: v1.1 milestone started
 - 2026-03-27: v1.0 MVP milestone completed
@@ -68,25 +71,30 @@ None identified.
 
 ### Decisions
 
-- Next.js 14→16 is a 2 major version jump (may have breaking changes)
-- Prisma 5→7 is also a major upgrade (check migration guide)
+- ✅ Next.js 14→16 upgrade complete with async params migration
+- Next.js 16 removes `next lint` command (integrated into build)
+- Prisma 5→7 is next major upgrade (Plan 11-02)
 - Playwright chosen for E2E (industry standard, good DX)
+- Route structure bug fixed (DELETE endpoints now use query params)
 
 ### Pending Todos
 
-None yet.
+- Manual verification checklist for Next.js 16 (see VERIFICATION.md)
+- Execute Plan 11-02 (Prisma 5→7 upgrade)
 
 ### Concerns
 
+- ~~Dependencies upgrades may surface hidden issues~~ → Next.js upgrade successful
 - No existing test infrastructure — starting from scratch
-- Dependencies upgrades may surface hidden issues
+- Manual testing needed before production deploy (see VERIFICATION.md)
 
 ## Session Continuity
 
-Last session: 2026-03-27T14:05:56.583Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-dependency-upgrades/11-CONTEXT.md
+Last session: 2026-03-27T14:53:29.000Z
+Stopped at: Plan 11-01 complete (Next.js 16 upgrade)
+Resume file: .planning/phases/11-dependency-upgrades/11-01-SUMMARY.md
+Next: Plan 11-02 (Prisma 5→7 upgrade)
 
 ---
 
-*State updated: 2026-03-27 after v1.1 roadmap creation*
+*State updated: 2026-03-27 after Plan 11-01 completion*
