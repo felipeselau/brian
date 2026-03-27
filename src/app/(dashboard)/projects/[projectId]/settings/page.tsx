@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { SettingsForm } from "./settings-form";
+import { ProjectSettingsForm } from "./settings-form";
 
 interface SettingsPageProps {
   params: {
@@ -36,7 +36,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     <div className="container mx-auto py-8 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Project Settings</h1>
       
-      <SettingsForm
+      <ProjectSettingsForm
         projectId={project.id}
         initialTitle={project.title}
         initialDescription={project.description}

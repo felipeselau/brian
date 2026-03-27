@@ -47,6 +47,7 @@ interface KanbanBoardProps {
   projectId: string;
   initialColumns: Column[];
   initialRequests: Request[];
+  onAddRequest?: (columnId: string) => void;
 }
 
 const statusToColumnId: Record<string, string> = {

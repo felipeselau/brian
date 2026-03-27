@@ -84,7 +84,8 @@ export async function POST(
     };
 
     // Check if all approvals are done → move to DONE
-    let newStatus = request.status;
+    const currentStatus = request.status;
+    let newStatus: "REVIEW" | "DONE" = "REVIEW";
     if (newApprovals.owner && newApprovals.client) {
       newStatus = "DONE";
     }
@@ -92,7 +93,7 @@ export async function POST(
     // Update lifecycle log
     const lifecycleLog = (request.lifecycleLog as any[]) || [];
     lifecycleLog.push({
-      from: "REVIEW",
+      from: currentStatus,
       to: newStatus,
       by: session.user.id,
       at: new Date().toISOString(),
@@ -101,7 +102,7 @@ export async function POST(
 
     const updateData: any = {
       approvals: newApprovals,
-      status: newStatus as any,
+      status: newStatus,
       lifecycleLog,
     };
 
