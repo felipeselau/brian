@@ -1,87 +1,254 @@
-# TESTING.md — Testing Practices
+# Testing Patterns
 
-**Generated:** 2026-03-27
-**Focus:** Testing structure and practices
+**Analysis Date:** 2026-03-26
 
-## Current State
+## Test Framework Status
 
 ### No Test Framework Installed
-The project currently has **no test framework** configured.
 
-### Available Linting
-- **ESLint** with `eslint-config-next`
-- Run with: `npm run lint`
+The project currently has **no test runner configured**. This is a significant gap in the codebase quality.
+
+**Package Manifest Evidence:**
+- No Jest, Vitest, or testing library in `package.json`
+- No `jest.config.*` or `vitest.config.*` files
+- No test files found via glob patterns: `*.test.*`, `*.spec.*`
+
+## Installed Quality Tools
+
+### Linting
+- **Config:** `.eslintrc.json` extends `next/core-web-vitals`
+- **Version:** `eslint@8.57.0`, `eslint-config-next@14.2.5`
+- **Run Command:** `npm run lint`
 
 ### Type Checking
-- **TypeScript** strict mode enabled
-- Run with: `npx tsc --noEmit`
+- **Version:** `typescript@5.5.3`
+- **Strict Mode:** Enabled in `tsconfig.json`
+- **Run Command:** `npx tsc --noEmit`
+
+### Build Validation
+- **Command:** `npm run build`
+- Uses Next.js build system
+
+## Current Code Quality
+
+### TypeScript Strict Mode
+- `"strict": true` in `tsconfig.json`
+- All type checking enforced
+- No implicit `any` allowed
+
+### ESLint Rules
+- Next.js web vitals rules enforced
+- Covers common React/Next.js issues
+- No custom rules detected
+
+### Prettier
+- **Not configured** - no `.prettierrc` or `.prettierrc.json`
+- No Prettier dependency in `package.json`
+
+## Test Coverage Gaps
+
+### What Is NOT Tested
+Based on codebase exploration:
+
+| Area | Status | Risk |
+|------|--------|------|
+| Zod Schemas | ❌ Not tested | Invalid data could break API |
+| API Routes | ❌ Not tested | Integration errors uncaught |
+| Components | ❌ Not tested | UI bugs not caught |
+| Auth Logic | ❌ Not tested | Permission bypass possible |
+| Prisma Queries | ❌ Not tested | Query errors uncaught |
+
+### Critical Untested Files
+
+| File | Purpose | Risk Level |
+|------|---------|------------|
+| `src/lib/auth.ts` | Authentication logic | HIGH |
+| `src/lib/prisma.ts` | Database client | HIGH |
+| `src/lib/validations/*.ts` | Input validation | HIGH |
+| `src/app/api/**/*.ts` | All API routes | HIGH |
+| `src/components/**/*.tsx` | UI components | MEDIUM |
 
 ## Testing Recommendations
 
-### Should Be Added
+### Immediate Needs
 
-1. **Vitest** or **Jest** for unit testing
-2. **React Testing Library** for component testing
-3. **Playwright** or **Cypress** for E2E testing
+1. **Install Vitest** (Recommended over Jest for Next.js)
+   ```bash
+   npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom jsdom
+   ```
 
-### Current Test Locations (if created)
-Tests should go in:
+2. **Configuration Required**
+   - Create `vitest.config.ts` with React plugin
+   - Add test scripts to `package.json`
+   - Create test setup file (`src/test/setup.ts`)
+
+3. **Create Initial Tests**
+   - Test Zod validation schemas
+   - Test utility functions (`cn()` in utils.ts)
+   - Test auth session handling
+
+### Suggested Test Structure
 ```
-__tests__/
+src/
+├── __tests__/
+│   ├── lib/
+│   │   ├── auth.test.ts
+│   │   ├── prisma.test.ts
+│   │   └── utils.test.ts
+│   ├── validations/
+│   │   ├── project.test.ts
+│   │   └── request.test.ts
+│   └── components/
+│       ├── project-card.test.tsx
+│       └── login-form.test.tsx
 ├── components/
 ├── lib/
-└── api/
+└── types/
 ```
 
-### Test Patterns to Use
-
-#### Unit Tests
-- Test utility functions in `src/lib/`
-- Test Zod validation schemas
-- Test helper functions
-
-#### Component Tests
-- Test UI components with React Testing Library
-- Test user interactions (clicks, form submits)
-- Test component rendering with mock data
-
-#### API Tests
-- Test API route handlers
-- Test with test database or mocks
-
-### Suggested Commands (when tests added)
-
-```bash
-npm run test           # Run all tests
-npm run test:watch    # Watch mode
-npm run test:coverage # Coverage report
-npm run e2e           # Run E2E tests (if Playwright/Cypress)
+### Commands to Add to package.json
+```json
+{
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage"
+  }
+}
 ```
 
-### CI Integration (future)
+## CI/CD Configuration
+
+### Current State
+- No CI/CD pipeline configured
+- No GitHub Actions workflows found
+- No pipeline validation
+
+### What Should Be Added
 ```yaml
-# .github/workflows/test.yml
-- name: Run tests
-  run: npm test
+# .github/workflows/ci.yml
+name: CI
 
-- name: Lint
-  run: npm run lint
+on: [push, pull_request]
 
-- name: Type check
-  run: npx tsc --noEmit
-```
+jobs:
+  test:
+    runs: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run test:run --if-present
+      - run: npm run build
 
-## Immediate Quality Checks
-
-Before committing, run locally:
-```bash
-npm run lint        # ESLint
-npx tsc --noEmit   # TypeScript check
-npm run build      # Production build
+  # Optional: Add Playwright for E2E
+  e2e:
+    runs: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install
+      - run: npx playwright test
 ```
 
 ## Code Coverage Goals
 
-- **Unit tests:** 80%+ coverage for `lib/`, `utils/`
-- **Component tests:** Key UI components
-- **E2E tests:** Critical user flows
+### Recommended Targets
+| Type | Target | Priority |
+|------|--------|----------|
+| Utility functions | 90%+ | HIGH |
+| Zod schemas | 80%+ | HIGH |
+| API routes | 70%+ | MEDIUM |
+| Components | 60%+ | MEDIUM |
+
+### Coverage for Quality-Critical Files
+- `src/lib/validations/*.ts` - Validation logic is critical
+- `src/lib/auth.ts` - Security-critical authentication
+- `src/app/api/**/*.ts` - All external-facing endpoints
+
+## Quality Metrics
+
+### Current State
+| Metric | Status | Notes |
+|--------|--------|-------|
+| Lint | ✅ Passing | `npm run lint` |
+| Types | ✅ Passing | `npx tsc --noEmit` |
+| Build | ✅ Passing | `npm run build` |
+| Tests | ❌ Missing | No test runner |
+| Coverage | ❌ N/A | No tests to cover |
+
+### Before Deploy Checklist
+```bash
+# Must pass before merge
+npm run lint        # ESLint
+npx tsc --noEmit   # TypeScript
+npm run build      # Production build
+# npm run test:run # (when tests added)
+```
+
+## Test Patterns (For Future Implementation)
+
+### Unit Test Template
+```typescript
+import { describe, it, expect } from 'vitest';
+
+describe('utilityFunction', () => {
+  it('should do something specific', () => {
+    const result = utilityFunction(input);
+    expect(result).toBe(expected);
+  });
+});
+```
+
+### Component Test Template
+```typescript
+import { render, screen, fireEvent } from '@testing-library/react';
+import { ComponentName } from './component-name';
+
+describe('ComponentName', () => {
+  it('should render correctly', () => {
+    render(<ComponentName prop="value" />);
+    expect(screen.getByText('expected')).toBeInTheDocument();
+  });
+  
+  it('should handle click events', () => {
+    const onClick = vi.fn();
+    render(<ComponentName onClick={onClick} />);
+    fireEvent.click(screen.getByRole('button'));
+    expect(onClick).toHaveBeenCalled();
+  });
+});
+```
+
+### API Route Test Template
+```typescript
+import { HttpRequest } from '@msw/node';
+import { setupServer } from 'msw/node';
+
+const server = setupServer();
+
+// Mock Prisma
+jest.mock('@/lib/prisma', () => ({
+  default: {
+    project: {
+      findMany: jest.fn(),
+    },
+  },
+}));
+
+describe('GET /api/projects', () => {
+  it('should return projects for authenticated user', async () => {
+    const response = await fetch('/api/projects');
+    expect(response.status).toBe(200);
+  });
+});
+```
+
+---
+
+*Testing analysis: 2026-03-26*
