@@ -62,6 +62,7 @@ export function RequestCard({ request, onClick }: RequestCardProps) {
     >
       <div className="flex items-start gap-2">
         <button
+          type="button"
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hover:text-foreground"
