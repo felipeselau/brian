@@ -4,107 +4,61 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-26)
+See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core Value:** Freelancers can track and bill every unit of work through a structured workflow: creation → planning → execution → review → approval → completion with full audit trail.
 
-**Current Focus:** All 10 phases complete — ready for UX polish and deployment
+**Current Focus:** v1.0 MVP Complete — Planning next milestone
 
-## Execution State
+## Milestone Status
 
-### Phase Progress
+### ✅ v1.0 MVP — SHIPPED
 
-| Phase | Name | Status | Notes |
-|-------|------|--------|-------|
-| 1 | Setup & Auth Foundation | ✅ Complete | Register, login, logout, JWT session |
-| 2 | Projects CRUD | ✅ Complete | Full CRUD + dashboard |
-| 3 | Member Management | ✅ Complete | Add/remove workers/clients, settings UI |
-| 4 | Kanban Board | ✅ Complete | @dnd-kit drag & drop, columns from JSON |
-| 5 | Requests CRUD | ✅ Complete | Create, read, update, delete requests |
-| 6 | Hours Tracking | ✅ Complete | estimatedHours, loggedHours fields |
-| 7 | Lifecycle Log | ✅ Complete | Append-only JSON log on status changes |
-| 8 | Comments & Attachments | ✅ Complete | Full API + UI for comments & attachments |
-| 9 | Approvals | ✅ Complete | Owner/client approve/reject workflow |
-| 10 | Business Rules | ✅ Complete | Settings enforcement in board API |
+**Completed:** 2026-03-27
+**Phases:** 10 | **Requirements:** 40/40
 
-### Phase 10 Implementation Summary
+All core features implemented:
+- Authentication (JWT, register, login, logout)
+- Projects CRUD with member management
+- Kanban board with @dnd-kit drag-and-drop
+- Requests lifecycle with status workflow
+- Hours tracking (estimated + logged)
+- Lifecycle audit log (append-only)
+- Comments and attachments (Vercel Blob)
+- Owner/client approval workflow
+- Business rules enforcement
 
-Implemented business rule enforcement for card movements:
+### Archived
 
-| Setting | Blocked Transitions | Error Code |
-|---------|---------------------|------------|
-| `requireEstimateBeforeStart: true` | `* → IN_PROGRESS` (no estimate) | `ESTIMATE_REQUIRED_BEFORE_START` |
-| `estimateRequired: true` | `* → REVIEW/DONE` (no estimate) | `ESTIMATE_REQUIRED_FOR_COMPLETION` |
+- `.planning/milestones/v1.0-ROADMAP.md`
+- `.planning/milestones/v1.0-REQUIREMENTS.md`
+- `.planning/MILESTONES.md`
 
-**Files modified:**
-- `src/app/api/projects/[projectId]/board/route.ts` — validation logic
-- `src/components/board/kanban-board.tsx` — error toast handling
+## Recent Activity
 
-### Recent Activity
-
-- 2026-03-27: Phase 10 complete — business rules enforcement implemented
-- 2026-03-26: Phase 1-9 verified complete via code analysis
+- 2026-03-27: v1.0 MVP milestone completed
+- 2026-03-27: Phase 10 business rules enforcement implemented
+- 2026-03-27: Retroactive SUMMARY.md created for all phases
+- 2026-03-26: Phases 1-9 verified complete via code analysis
 - 2026-03-26: GSD workflow agents configured (6 agents)
-- 2026-03-26: Codebase map refreshed (7 documents, 2,353 lines)
 
-### Blockers
+## Blockers
 
 None identified.
 
-### Next Actions (Post-MVP)
+## Next Actions
 
-1. UX polish — loading states, empty states, animations
-2. Mobile responsiveness audit
-3. Performance optimization (memo, Suspense boundaries)
-4. E2E tests with Playwright
-5. Deploy to Vercel
+1. **Post-MVP polish** — loading states, empty states, animations
+2. **Mobile audit** — responsive design review
+3. **Performance** — React.memo, Suspense boundaries
+4. **Testing** — E2E tests with Playwright
+5. **Deploy** — Vercel production deployment
 
----
-
-## Verified Implementation Files
-
-### Auth (Phase 1)
-- `src/app/api/auth/register/route.ts` — Registration API
-- `src/lib/auth.ts` — NextAuth v5 config with Credentials provider
-
-### Projects (Phase 2)
-- `src/app/api/projects/route.ts` — List/create projects
-- `src/app/api/projects/[projectId]/route.ts` — CRUD operations
-- `src/app/(dashboard)/dashboard/page.tsx` — Project dashboard
-
-### Members (Phase 3)
-- `src/app/api/projects/[projectId]/members/route.ts` — Add/remove members
-- `src/app/(dashboard)/projects/[projectId]/settings/settings-form.tsx` — Settings UI
-
-### Kanban Board (Phase 4)
-- `src/app/api/projects/[projectId]/board/route.ts` — Board data + move cards + business rules
-- `src/components/board/kanban-board.tsx` — @dnd-kit implementation
-
-### Requests (Phase 5)
-- `src/app/api/projects/[projectId]/requests/route.ts` — List/create requests
-- `src/app/api/projects/[projectId]/requests/[requestId]/route.ts` — CRUD + lifecycle
-
-### Hours Tracking (Phase 6)
-- Fields: `estimatedHours`, `loggedHours` in Request model
-- UI: Request modal with hours input
-
-### Lifecycle Log (Phase 7)
-- JSON array in `Request.lifecycleLog`
-- Appended on every status change
-
-### Comments & Attachments (Phase 8)
-- `src/app/api/projects/[projectId]/requests/[requestId]/comments/route.ts`
-- `src/app/api/projects/[projectId]/requests/[requestId]/attachments/route.ts`
-
-### Approvals (Phase 9)
-- `src/app/api/projects/[projectId]/requests/[requestId]/approve/route.ts`
-- `src/app/api/projects/[projectId]/requests/[requestId]/reject/route.ts`
-- `Request.approvals` JSON field: `{ owner?: boolean, client?: boolean }`
-
-### Business Rules (Phase 10)
-- Settings validation in `board/route.ts` PATCH handler
-- Error codes: `ESTIMATE_REQUIRED_BEFORE_START`, `ESTIMATE_REQUIRED_FOR_COMPLETION`
+To start a new milestone:
+```
+/gsd-new-milestone
+```
 
 ---
 
-*State updated: 2026-03-27 after Phase 10 completion*
+*State updated: 2026-03-27 after v1.0 milestone completion*
