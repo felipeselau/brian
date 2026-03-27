@@ -8,9 +8,28 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core Value:** Freelancers can track and bill every unit of work through a structured workflow: creation → planning → execution → review → approval → completion with full audit trail.
 
-**Current Focus:** v1.0 MVP Complete — Planning next milestone
+**Current Focus:** v1.1 Polish & Quality — Defining requirements
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-27 — Milestone v1.1 started
 
 ## Milestone Status
+
+### 🚧 v1.1 Polish & Quality — IN PROGRESS
+
+**Started:** 2026-03-27
+**Goal:** Improve UX polish, add test coverage, and update core dependencies.
+
+Target features:
+- Dependency updates (Next.js 14→16, Prisma 5→7)
+- Loading states, empty states, animations
+- Mobile responsive audit & fixes
+- E2E tests with Playwright
+- Error boundaries for graceful failures
 
 ### ✅ v1.0 MVP — SHIPPED
 
@@ -36,29 +55,21 @@ All core features implemented:
 
 ## Recent Activity
 
+- 2026-03-27: v1.1 milestone started
 - 2026-03-27: v1.0 MVP milestone completed
 - 2026-03-27: Phase 10 business rules enforcement implemented
 - 2026-03-27: Retroactive SUMMARY.md created for all phases
-- 2026-03-26: Phases 1-9 verified complete via code analysis
-- 2026-03-26: GSD workflow agents configured (6 agents)
 
 ## Blockers
 
 None identified.
 
-## Next Actions
+## Accumulated Context
 
-1. **Post-MVP polish** — loading states, empty states, animations
-2. **Mobile audit** — responsive design review
-3. **Performance** — React.memo, Suspense boundaries
-4. **Testing** — E2E tests with Playwright
-5. **Deploy** — Vercel production deployment
-
-To start a new milestone:
-```
-/gsd-new-milestone
-```
+- Next.js 14→16 is a major upgrade (2 major versions)
+- Prisma 5→7 is also a major upgrade
+- No existing test infrastructure — starting from scratch
 
 ---
 
-*State updated: 2026-03-27 after v1.0 milestone completion*
+*State updated: 2026-03-27 after v1.1 milestone start*

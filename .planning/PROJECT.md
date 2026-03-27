@@ -8,6 +8,17 @@ A Trello-like project management system for freelancers and small teams. Enables
 
 Freelancers can track and bill every unit of work through a structured workflow: creation → planning → execution → review → approval → completion with full audit trail.
 
+## Current Milestone: v1.1 Polish & Quality
+
+**Goal:** Improve UX polish, add test coverage, and update core dependencies to latest stable versions.
+
+**Target features:**
+- Dependency updates (Next.js 14→16, Prisma 5→7)
+- Loading states, empty states, animations
+- Mobile responsive audit & fixes
+- E2E tests with Playwright
+- Error boundaries for graceful failures
+
 ## Requirements
 
 ### Validated
@@ -18,27 +29,26 @@ Freelancers can track and bill every unit of work through a structured workflow:
 - ✓ **AUTH-02**: Session persistence — via JWT tokens
 - ✓ **PROJ-01**: Create/read projects — owner can CRUD, members view
 - ✓ **PROJ-02**: Project status (active/archived) — archived generates JSON snapshot
+- ✓ **PROJ-03**: Project settings (requireEstimateBeforeStart, estimateRequired) — Phase 10
+- ✓ **PROJ-04**: Member management (add/remove workers and clients) — Phase 3
 - ✓ **UI-01**: Dashboard with project list — filtered by status
 - ✓ **UI-02**: Project detail page — displays board structure
+- ✓ **BOARD-01**: Kanban board with columns (CRUD via JSON) — Phase 4
+- ✓ **BOARD-02**: Drag & drop cards between columns using @dnd-kit — Phase 4
+- ✓ **REQ-01**: Create/read/update/delete requests (cards) — Phase 5
+- ✓ **REQ-02**: Request status workflow (backlog → in_progress → review → done/blocked/waiting) — Phase 5
+- ✓ **REQ-03**: Assign worker to request — Phase 5
+- ✓ **REQ-04**: Estimated hours tracking — Phase 6
+- ✓ **REQ-05**: Logged hours tracking — Phase 6
+- ✓ **REQ-06**: Request lifecycle log (append-only JSON) — Phase 7
+- ✓ **REQ-07**: Request comments — Phase 8
+- ✓ **REQ-08**: Request attachments — Phase 8
+- ✓ **APPR-01**: Owner approval workflow — Phase 9
+- ✓ **APPR-02**: Client approval workflow — Phase 9
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
-
-- [ ] **PROJ-03**: Project settings (requireEstimateBeforeStart, estimateRequired)
-- [ ] **PROJ-04**: Member management (add/remove workers and clients)
-- [ ] **BOARD-01**: Kanban board with columns (CRUD via JSON)
-- [ ] **BOARD-02**: Drag & drop cards between columns using @dnd-kit
-- [ ] **REQ-01**: Create/read/update/delete requests (cards)
-- [ ] **REQ-02**: Request status workflow (backlog → in_progress → review → done/blocked/waiting)
-- [ ] **REQ-03**: Assign worker to request
-- [ ] **REQ-04**: Estimated hours tracking
-- [ ] **REQ-05**: Logged hours tracking
-- [ ] **REQ-06**: Request lifecycle log (append-only JSON)
-- [ ] **REQ-07**: Request comments
-- [ ] **REQ-08**: Request attachments
-- [ ] **APPR-01**: Owner approval workflow
-- [ ] **APPR-02**: Client approval workflow
+<!-- Current scope. Building toward these. v1.1 requirements will be defined in REQUIREMENTS.md -->
 
 ### Out of Scope
 
@@ -55,34 +65,33 @@ Freelancers can track and bill every unit of work through a structured workflow:
 ## Context
 
 **Technical Environment:**
-- Next.js 14 with App Router (Server/Client Components)
-- Prisma ORM with PostgreSQL
+- Next.js 14.2 with App Router (Server/Client Components) — upgrading to 16.x
+- Prisma 5.14 ORM with PostgreSQL — upgrading to 7.x
 - NextAuth.js v5 (credentials provider, JWT)
 - shadcn/ui components + Tailwind CSS v4
 - @dnd-kit for drag & drop
 - Zod for validation
-- @vercel/blob for file uploads (planned)
+- @vercel/blob for file uploads
 
-**Current Implementation State:**
+**Current Implementation State (v1.0 complete):**
 - Auth flow: login/register with credentials (NextAuth v5)
-- Database: Prisma schema with User, Project, Request models
-- UI: shadcn/ui components, dashboard, project list, project detail
-- Role system defined in Prisma (OWNER, WORKER, CLIENT)
+- Database: Prisma schema with User, Project, ProjectMember, Request models
+- UI: Full Kanban board with drag-and-drop, request modals, comments, attachments
+- Role system: OWNER, WORKER, CLIENT with permission enforcement
+- Hours tracking: estimated and logged hours
+- Lifecycle log: append-only audit trail
+- Approvals: Owner and client approval workflows
 
-**User Research Themes:**
-- Freelancers need billable hour tracking
-- Clients want visibility into work progress
-- Owners need control over who sees/does what
-
-**Known Issues to Address:**
-- Phases 6-20 not yet implemented (member management, board, requests, etc.)
-- No API routes for full CRUD operations yet
+**Known Issues to Address (v1.1):**
 - No test coverage established
+- Loading states missing in key areas
+- Mobile responsiveness needs audit
+- Dependencies need major version updates
 
 ## Constraints
 
-- **[Tech Stack]**: Next.js 14 + Prisma + PostgreSQL — must use these exact technologies
-- **[Time]**: MVP features prioritized; complex features deferred to v2+
+- **[Tech Stack]**: Next.js 16 + Prisma 7 + PostgreSQL — upgrading core dependencies
+- **[Time]**: Polish and quality focus; new features deferred to v2+
 - **[Deployment]**: Vercel target (requires compatible configuration)
 - **[Authentication]**: Credentials only (email/password), OAuth deferred to v2+
 
@@ -94,10 +103,13 @@ Freelancers can track and bill every unit of work through a structured workflow:
 | JSON for lifecycle log | Append-only audit trail requirement | ✓ Good |
 | Hard delete for requests | Cascade delete required for project deletion | ✓ Good |
 | shadcn/ui component library | Rapid UI development, accessible components | ✓ Good |
+| Next.js 14→16 upgrade | Stay current, performance improvements | Pending |
+| Prisma 5→7 upgrade | New features, better performance | Pending |
+| Playwright for E2E | Industry standard, good DX | Pending |
 
 ---
 
-*Last updated: 2026-03-26 after GSD project initialization*
+*Last updated: 2026-03-27 after v1.1 milestone start*
 
 ## Evolution
 
