@@ -51,6 +51,44 @@
         "write": false,
         "edit": false
       }
+    },
+    "gsd-planner": {
+      "description": "GSD — Cria planos executáveis para fases do projeto",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/gsd-planner.md"
+    },
+    "gsd-phase-researcher": {
+      "description": "GSD — Pesquisa abordagens técnicas antes de planejar",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/gsd-phase-researcher.md"
+    },
+    "gsd-plan-checker": {
+      "description": "GSD — Verifica qualidade dos planos antes da execução",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/gsd-plan-checker.md",
+      "tools": {
+        "write": false,
+        "edit": false
+      }
+    },
+    "gsd-executor": {
+      "description": "GSD — Executa planos de fase implementando cada tarefa",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/gsd-executor.md"
+    },
+    "gsd-verifier": {
+      "description": "GSD — Verifica se a fase foi concluída corretamente",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/gsd-verifier.md",
+      "tools": {
+        "write": false,
+        "edit": false
+      }
+    },
+    "gsd-codebase-mapper": {
+      "description": "GSD — Mapeia estrutura e padrões do codebase",
+      "mode": "subagent",
+      "prompt": ".opencode/agents/gsd-codebase-mapper.md"
     }
   },
   "instructions": ["AGENTS.md"]
