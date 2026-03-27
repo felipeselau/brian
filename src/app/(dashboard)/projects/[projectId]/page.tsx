@@ -122,6 +122,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               projectId={project.id}
               columns={(project.columns as any) || []}
               requests={(project.requests as any) || []}
+              members={(project.members as any) || []}
             />
           </TabsContent>
           
