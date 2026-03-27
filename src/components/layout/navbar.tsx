@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { UserMenu } from "./user-menu";
 import { Brain } from "lucide-react";
 
@@ -11,7 +12,10 @@ interface NavbarProps {
   };
 }
 
-export function Navbar({ user }: NavbarProps) {
+export async function Navbar({ user }: NavbarProps) {
+  const cookieStore = await cookies();
+  const viewAsRole = cookieStore.get("view-as-role")?.value || null;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -23,7 +27,7 @@ export function Navbar({ user }: NavbarProps) {
         </Link>
         
         <div className="ml-auto flex items-center space-x-4">
-          <UserMenu user={user} />
+          <UserMenu user={{ ...user, viewAsRole }} />
         </div>
       </div>
     </header>
