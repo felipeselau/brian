@@ -24,19 +24,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
-  const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/login" });
-  };
-
-  const getInitials = (name?: string | null) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
+  if (!user) return null;
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -49,6 +37,20 @@ export function UserMenu({ user }: UserMenuProps) {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/login" });
   };
 
   return (
