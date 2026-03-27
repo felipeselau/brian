@@ -36,29 +36,31 @@
 
 **Milestone Goal:** Improve UX polish, add test coverage, and update core dependencies to latest stable versions.
 
-- ⚠️ **Phase 11: Dependency Upgrades** - Update Next.js to 16 and Prisma to 7 with zero regressions (Plan 1/2 complete, Plan 2/2 BLOCKED)
+- [x] **Phase 11: Dependency Upgrades** - Update Next.js to 16 (completed 2026-03-27)
 - [ ] **Phase 12: Loading & Empty States** - Add loading skeletons and helpful empty states throughout
 - [ ] **Phase 13: Animations & Mobile** - Smooth transitions and mobile-responsive audit
 - [ ] **Phase 14: E2E Testing & Error Handling** - Playwright tests and graceful error boundaries
 
+**Deferred to v1.2+:**
+- Prisma 5→7 upgrade (requires ESM migration, out of v1.1 scope)
+
 ## Phase Details
 
-### Phase 11: Dependency Upgrades ⚠️ BLOCKED
+### Phase 11: Dependency Upgrades ✅ COMPLETE
 **Goal**: App runs on latest stable dependencies with all features working
 **Depends on**: Phase 10 (v1.0 complete)
-**Requirements**: DEPS-01, DEPS-02, DEPS-03
+**Requirements**: DEPS-01 (Next.js 16) — DEPS-02 & DEPS-03 deferred to v1.2+
 **Success Criteria** (what must be TRUE):
-  1. User can run `npm run dev` and use all features on Next.js 16
-  2. User can perform all database operations (CRUD, relations) on Prisma 7
-  3. User can run `npm run build` and deploy without dependency conflicts
-  4. All existing functionality (auth, board, drag-drop, uploads) works unchanged
-**Plans**: 2 plans
-  - [x] Plan 11-01: Next.js 14→16 upgrade (complete)
-  - [❌] Plan 11-02: Prisma 5→7 upgrade (BLOCKED - requires ESM migration)
+  1. ✅ User can run `npm run dev` and use all features on Next.js 16
+  2. 🔄 Prisma upgrade deferred (5.22.0 stable, supported through 2026)
+  3. ✅ User can run `npm run build` and deploy without dependency conflicts
+  4. ✅ All existing functionality (auth, board, drag-drop, uploads) works unchanged
+**Plans**: 1/1 complete
+  - [x] Plan 11-01: Next.js 14→16 upgrade (completed 2026-03-27)
 
-**BLOCKER:** Prisma 7 requires ESM migration, new config system, and driver adapters.
-Out of scope for atomic upgrade. Decision required on migration path.
-See: `.planning/phases/11-dependency-upgrades/11-02-BLOCKER.md`
+**Decision:** Prisma 7 upgrade deferred to v1.2+ due to ESM migration requirements.
+Current stack: Next.js 16.2.1 + Prisma 5.22.0 (stable, all features working).
+See: `.planning/phases/11-dependency-upgrades/11-02-BLOCKER.md` for technical details.
 
 ### Phase 12: Loading & Empty States
 **Goal**: Users see appropriate feedback during loading and when no data exists
@@ -103,7 +105,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-10 | v1.0 | 10/10 | Complete | 2026-03-27 |
-| 11. Dependency Upgrades | v1.1 | 1/2 | ⚠️ Blocked | - |
+| 11. Dependency Upgrades | v1.1 | 1/1 | Complete | 2026-03-27 |
 | 12. Loading & Empty States | v1.1 | 0/? | Not started | - |
 | 13. Animations & Mobile | v1.1 | 0/? | Not started | - |
 | 14. E2E Testing & Error Handling | v1.1 | 0/? | Not started | - |

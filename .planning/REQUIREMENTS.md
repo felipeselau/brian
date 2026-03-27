@@ -10,9 +10,11 @@
 
 ### Dependency Updates
 
-- [ ] **DEPS-01**: User can run app on Next.js 16 with all features working
-- [ ] **DEPS-02**: User can run app on Prisma 7 with all database operations working
-- [ ] **DEPS-03**: User can build and deploy without dependency conflicts
+- [x] **DEPS-01**: User can run app on Next.js 16 with all features working (Phase 11, completed 2026-03-27)
+- [🔄] **DEPS-02**: ~~User can run app on Prisma 7~~ **DEFERRED to v1.2+** (requires ESM migration)
+- [🔄] **DEPS-03**: ~~Zero regression verification on Prisma 7~~ **DEFERRED to v1.2+**
+
+**Note:** Prisma remains at 5.22.0 (stable, supported). Next.js 16 upgrade successful.
 
 ### UX Polish
 
