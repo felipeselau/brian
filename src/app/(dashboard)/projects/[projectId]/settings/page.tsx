@@ -4,9 +4,9 @@ import prisma from "@/lib/prisma";
 import { ProjectSettingsForm } from "./settings-form";
 
 interface SettingsPageProps {
-  params: {
+  params: Promise<{
     projectId: string;
-  };
+  }>;
 }
 
 export default async function SettingsPage({ params }: SettingsPageProps) {
@@ -16,8 +16,10 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     redirect("/login");
   }
 
+  const { projectId } = await params;
+
   const project = await prisma.project.findUnique({
-    where: { id: params.projectId },
+    where: { id: projectId },
   });
 
   if (!project) {
@@ -27,7 +29,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   const isOwner = project.ownerId === session.user.id;
 
   if (!isOwner) {
-    redirect(`/projects/${params.projectId}`);
+    redirect(`/projects/${projectId}`);
   }
 
   const projectSettings = project.settings as any;

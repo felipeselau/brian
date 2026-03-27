@@ -15,7 +15,7 @@ const removeMemberSchema = z.object({
 // GET /api/projects/[projectId]/members - List project members
 export async function GET(
   req: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await auth();
@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -70,7 +70,7 @@ export async function GET(
 // POST /api/projects/[projectId]/members - Add member to project
 export async function POST(
   req: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await auth();
@@ -79,7 +79,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
     const body = await req.json();
     const validatedData = addMemberSchema.parse(body);
 
@@ -166,7 +166,7 @@ export async function POST(
 // DELETE /api/projects/[projectId]/members - Remove member from project
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await auth();
@@ -175,7 +175,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
     const body = await req.json();
     const validatedData = removeMemberSchema.parse(body);
 

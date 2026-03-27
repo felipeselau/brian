@@ -72,7 +72,7 @@ export function CommentsSection({
     if (!confirm("Delete this comment?")) return;
 
     try {
-      const response = await fetch(`/api/projects/*-PLACEHOLDER-*/requests/${requestId}/comments/${commentId}`, {
+      const response = await fetch(`/api/projects/*-PLACEHOLDER-*/requests/${requestId}/comments?commentId=${commentId}`, {
         method: "DELETE",
       });
 

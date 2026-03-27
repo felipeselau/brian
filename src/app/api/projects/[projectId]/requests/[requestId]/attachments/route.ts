@@ -13,7 +13,7 @@ const createAttachmentSchema = z.object({
 // GET /api/projects/[projectId]/requests/[requestId]/attachments - List attachments
 export async function GET(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = params;
+    const { requestId } = await params;
 
     const request = await prisma.request.findUnique({
       where: { id: requestId },
@@ -65,7 +65,7 @@ export async function GET(
 // POST /api/projects/[projectId]/requests/[requestId]/attachments - Add attachment
 export async function POST(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -74,7 +74,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = params;
+    const { requestId } = await params;
     const body = await req.json();
     const validatedData = createAttachmentSchema.parse(body);
 
@@ -129,10 +129,10 @@ export async function POST(
   }
 }
 
-// DELETE /api/projects/[projectId]/requests/[requestId]/attachments/[attachmentId] - Delete attachment
+// DELETE /api/projects/[projectId]/requests/[requestId]/attachments?attachmentId=... - Delete attachment
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string; attachmentId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -141,7 +141,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { attachmentId } = params;
+    const { projectId } = await params;
+    const { searchParams } = new URL(req.url);
+    const attachmentId = searchParams.get("attachmentId");
+
+    if (!attachmentId) {
+      return NextResponse.json({ error: "Attachment ID is required" }, { status: 400 });
+    }
 
     const attachment = await prisma.attachment.findUnique({
       where: { id: attachmentId },
@@ -152,7 +158,7 @@ export async function DELETE(
       },
     });
 
-    if (!attachment || attachment.request.projectId !== params.projectId) {
+    if (!attachment || attachment.request.projectId !== projectId) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 

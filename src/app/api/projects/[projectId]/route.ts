@@ -6,7 +6,7 @@ import { updateProjectSchema } from "@/lib/validations/project";
 // GET /api/projects/[projectId] - Get a single project
 export async function GET(
   req: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await auth();
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -77,7 +77,7 @@ export async function GET(
 // PATCH /api/projects/[projectId] - Update a project
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await auth();
@@ -86,7 +86,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
 
     // Check if project exists and user is owner
     const existingProject = await prisma.project.findUnique({
@@ -160,7 +160,7 @@ export async function PATCH(
 // DELETE /api/projects/[projectId] - Delete a project
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await auth();
@@ -169,7 +169,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
 
     // Check if project exists and user is owner
     const existingProject = await prisma.project.findUnique({

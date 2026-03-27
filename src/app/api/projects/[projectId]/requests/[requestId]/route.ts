@@ -15,7 +15,7 @@ const updateRequestSchema = z.object({
 // GET /api/projects/[projectId]/requests/[requestId] - Get single request
 export async function GET(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = params;
+    const { projectId, requestId } = await params;
 
     const request = await prisma.request.findUnique({
       where: { id: requestId },
@@ -116,7 +116,7 @@ export async function GET(
 // PATCH /api/projects/[projectId]/requests/[requestId] - Update request
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -125,7 +125,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = params;
+    const { projectId, requestId } = await params;
     const body = await req.json();
 
     const existingRequest = await prisma.request.findUnique({
@@ -208,7 +208,7 @@ export async function PATCH(
 // DELETE /api/projects/[projectId]/requests/[requestId] - Delete request
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -217,7 +217,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId, requestId } = params;
+    const { projectId, requestId } = await params;
 
     const existingRequest = await prisma.request.findUnique({
       where: { id: requestId },

@@ -10,7 +10,7 @@ const approvalSchema = z.object({
 // POST /api/projects/[projectId]/requests/[requestId]/approve
 export async function POST(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -19,7 +19,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = params;
+    const { projectId, requestId } = await params;
     const body = await req.json();
     const { type } = approvalSchema.parse(body);
 
@@ -34,7 +34,7 @@ export async function POST(
       },
     });
 
-    if (!request || request.projectId !== params.projectId) {
+    if (!request || request.projectId !== projectId) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
     }
 

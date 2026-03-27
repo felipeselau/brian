@@ -10,7 +10,7 @@ const createCommentSchema = z.object({
 // GET /api/projects/[projectId]/requests/[requestId]/comments - List comments
 export async function GET(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -19,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = params;
+    const { requestId } = await params;
 
     // Check if request exists
     const request = await prisma.request.findUnique({
@@ -74,7 +74,7 @@ export async function GET(
 // POST /api/projects/[projectId]/requests/[requestId]/comments - Add comment
 export async function POST(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -83,7 +83,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { requestId } = params;
+    const { requestId } = await params;
     const body = await req.json();
     const validatedData = createCommentSchema.parse(body);
 
@@ -148,10 +148,10 @@ export async function POST(
   }
 }
 
-// DELETE /api/projects/[projectId]/requests/[requestId]/comments/[commentId] - Delete comment
+// DELETE /api/projects/[projectId]/requests/[requestId]/comments?commentId=... - Delete comment
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { projectId: string; requestId: string; commentId: string } }
+  { params }: { params: Promise<{ projectId: string; requestId: string }> }
 ) {
   try {
     const session = await auth();
@@ -160,7 +160,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { commentId } = params;
+    const { projectId } = await params;
+    const { searchParams } = new URL(req.url);
+    const commentId = searchParams.get("commentId");
+
+    if (!commentId) {
+      return NextResponse.json({ error: "Comment ID is required" }, { status: 400 });
+    }
 
     // Check if comment exists
     const comment = await prisma.comment.findUnique({
@@ -172,7 +178,7 @@ export async function DELETE(
       },
     });
 
-    if (!comment || comment.request.projectId !== params.projectId) {
+    if (!comment || comment.request.projectId !== projectId) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 

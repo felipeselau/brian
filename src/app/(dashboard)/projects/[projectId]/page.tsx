@@ -19,9 +19,9 @@ const statusLabels: Record<ProjectStatus, string> = {
 };
 
 interface ProjectPageProps {
-  params: {
+  params: Promise<{
     projectId: string;
-  };
+  }>;
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
@@ -31,8 +31,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     redirect("/login");
   }
 
+  const { projectId } = await params;
+
   const project = await prisma.project.findUnique({
-    where: { id: params.projectId },
+    where: { id: projectId },
     include: {
       owner: {
         select: {

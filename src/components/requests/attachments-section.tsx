@@ -73,7 +73,7 @@ export function AttachmentsSection({
     if (!confirm("Delete this attachment?")) return;
 
     try {
-      const response = await fetch(`/api/projects/PROJECT_ID_PLACEHOLDER/requests/${requestId}/attachments/${attachmentId}`, {
+      const response = await fetch(`/api/projects/PROJECT_ID_PLACEHOLDER/requests/${requestId}/attachments?attachmentId=${attachmentId}`, {
         method: "DELETE",
       });
 

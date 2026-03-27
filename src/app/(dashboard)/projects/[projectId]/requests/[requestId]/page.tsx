@@ -21,10 +21,10 @@ const statusColors: Record<RequestStatus, string> = {
 };
 
 interface RequestPageProps {
-  params: {
+  params: Promise<{
     projectId: string;
     requestId: string;
-  };
+  }>;
 }
 
 export default async function RequestPage({ params }: RequestPageProps) {
@@ -34,8 +34,10 @@ export default async function RequestPage({ params }: RequestPageProps) {
     redirect("/login");
   }
 
+  const { projectId, requestId } = await params;
+
   const request = await prisma.request.findUnique({
-    where: { id: params.requestId },
+    where: { id: requestId },
     include: {
       project: {
         include: {
@@ -99,7 +101,7 @@ export default async function RequestPage({ params }: RequestPageProps) {
     },
   });
 
-  if (!request || request.projectId !== params.projectId) {
+  if (!request || request.projectId !== projectId) {
     notFound();
   }
 
@@ -161,7 +163,7 @@ export default async function RequestPage({ params }: RequestPageProps) {
           <TabsContent value="details">
             <EditRequestForm
               request={request as any}
-              projectId={params.projectId}
+              projectId={projectId}
               members={members}
               isOwner={isOwner}
               canEdit={isOwner || request.assignedToId === session.user.id || request.createdById === session.user.id}
@@ -171,7 +173,7 @@ export default async function RequestPage({ params }: RequestPageProps) {
           <TabsContent value="approvals">
             <ApprovalsSection
               requestId={request.id}
-              projectId={params.projectId}
+              projectId={projectId}
               approvals={request.approvals as any}
               requestStatus={request.status}
               isOwner={isOwner}
