@@ -1,16 +1,24 @@
-import { auth } from "@/lib/auth";
+import { middlewareAuth } from "@/lib/auth-middleware";
 import { NextResponse } from "next/server";
 
-export default auth((req) => {
+// Disable Edge Runtime - uses Node.js APIs
+export const runtime = "nodejs";
+
+export default middlewareAuth((req: any) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
+  const hasInviteToken = req.nextUrl.searchParams.has("token");
 
   // Public routes
   const publicRoutes = ["/login", "/register"];
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
-  // Auth routes  - redirect to dashboard if already logged in
+  // Auth routes - redirect to dashboard if already logged in
+  // EXCEPTION: Allow logged-in users to access /register with invite token
   if (isPublicRoute && isLoggedIn) {
+    if (pathname.startsWith("/register") && hasInviteToken) {
+      return NextResponse.next();
+    }
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 

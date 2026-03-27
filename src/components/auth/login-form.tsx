@@ -82,8 +82,11 @@ export function LoginForm() {
           <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="text-primary hover:underline">
-              Sign up
+              Register as Owner
             </Link>
+          </p>
+          <p className="text-xs text-center text-muted-foreground">
+            Workers and clients receive an invite link from the project owner
           </p>
         </CardFooter>
       </form>

@@ -19,12 +19,14 @@ interface Attachment {
 }
 
 interface AttachmentsSectionProps {
+  projectId: string;
   requestId: string;
   attachments: Attachment[];
   isOwner: boolean;
 }
 
 export function AttachmentsSection({
+  projectId,
   requestId,
   attachments: initialAttachments,
   isOwner,
@@ -45,7 +47,7 @@ export function AttachmentsSection({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/projects/PROJECT_ID_PLACEHOLDER/requests/${requestId}/attachments`, {
+      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/attachments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAttachment),
@@ -73,7 +75,7 @@ export function AttachmentsSection({
     if (!confirm("Delete this attachment?")) return;
 
     try {
-      const response = await fetch(`/api/projects/PROJECT_ID_PLACEHOLDER/requests/${requestId}/attachments?attachmentId=${attachmentId}`, {
+      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/attachments?attachmentId=${attachmentId}`, {
         method: "DELETE",
       });
 

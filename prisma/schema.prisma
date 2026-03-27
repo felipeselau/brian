@@ -16,6 +16,12 @@ enum UserRole {
   CLIENT
 }
 
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
 enum ProjectStatus {
   ACTIVE
   ARCHIVED
@@ -48,6 +54,7 @@ model User {
   assignedRequests Request[]        @relation("AssignedRequests")
   createdRequests  Request[]        @relation("CreatedRequests")
   comments         Comment[]
+  sentInvites      Invite[]         @relation("SentInvites")
   
   @@map("users")
 }
@@ -70,6 +77,7 @@ model Project {
   
   members     ProjectMember[]
   requests    Request[]
+  invites     Invite[]
   
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -168,4 +176,27 @@ model Attachment {
   
   @@index([requestId])
   @@map("attachments")
+}
+
+model Invite {
+  id          String       @id @default(cuid())
+  email       String
+  token       String       @unique
+  role        UserRole
+  status      InviteStatus @default(PENDING)
+  expiresAt   DateTime
+  
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  invitedById String
+  invitedBy   User         @relation("SentInvites", fields: [invitedById], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@unique([projectId, email])
+  @@index([token])
+  @@index([email])
+  @@map("invites")
 }

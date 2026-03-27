@@ -21,6 +21,7 @@ interface Comment {
 }
 
 interface CommentsSectionProps {
+  projectId: string;
   requestId: string;
   comments: Comment[];
   currentUserId: string;
@@ -28,6 +29,7 @@ interface CommentsSectionProps {
 }
 
 export function CommentsSection({
+  projectId,
   requestId,
   comments: initialComments,
   currentUserId,
@@ -45,7 +47,7 @@ export function CommentsSection({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/projects/*-PLACEHOLDER-*/requests/${requestId}/comments`, {
+      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newComment }),
@@ -72,7 +74,7 @@ export function CommentsSection({
     if (!confirm("Delete this comment?")) return;
 
     try {
-      const response = await fetch(`/api/projects/*-PLACEHOLDER-*/requests/${requestId}/comments?commentId=${commentId}`, {
+      const response = await fetch(`/api/projects/${projectId}/requests/${requestId}/comments?commentId=${commentId}`, {
         method: "DELETE",
       });
 

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestStatus } from "@prisma/client";
 import { EditRequestForm } from "./edit-request-form";
@@ -141,9 +141,7 @@ export default async function RequestPage({ params }: RequestPageProps) {
               in {request.project.title}
             </p>
           </div>
-          <Button variant="outline" onClick={() => window.history.back()}>
-            Back to Board
-          </Button>
+          <BackButton />
         </div>
 
         <Tabs defaultValue="details" className="w-full">
@@ -185,6 +183,7 @@ export default async function RequestPage({ params }: RequestPageProps) {
           
           <TabsContent value="comments">
             <CommentsSection
+              projectId={projectId}
               requestId={request.id}
               comments={(request.comments as any) || []}
               currentUserId={session.user.id}
@@ -194,6 +193,7 @@ export default async function RequestPage({ params }: RequestPageProps) {
           
           <TabsContent value="attachments">
             <AttachmentsSection
+              projectId={projectId}
               requestId={request.id}
               attachments={(request.attachments as any) || []}
               isOwner={isOwner}
