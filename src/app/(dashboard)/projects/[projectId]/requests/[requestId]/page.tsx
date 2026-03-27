@@ -9,6 +9,7 @@ import { RequestStatus } from "@prisma/client";
 import { EditRequestForm } from "./edit-request-form";
 import { CommentsSection } from "@/components/requests/comments-section";
 import { AttachmentsSection } from "@/components/requests/attachments-section";
+import { ApprovalsSection } from "./approvals-section";
 
 const statusColors: Record<RequestStatus, string> = {
   BACKLOG: "bg-gray-500",
@@ -106,6 +107,9 @@ export default async function RequestPage({ params }: RequestPageProps) {
   const isMember = request.project.members.some(
     (m) => m.userId === session.user.id
   );
+  const isClient = request.project.members.some(
+    (m) => m.userId === session.user.id && m.role === "CLIENT"
+  );
 
   if (!isOwner && !isMember) {
     redirect("/dashboard");
@@ -116,6 +120,9 @@ export default async function RequestPage({ params }: RequestPageProps) {
     role: m.role,
     user: m.user,
   }));
+
+  // Get clients for approval
+  const clients = members.filter((m) => m.role === "CLIENT");
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
@@ -140,6 +147,9 @@ export default async function RequestPage({ params }: RequestPageProps) {
         <Tabs defaultValue="details" className="w-full">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="approvals">
+              Approvals {request.status === "REVIEW" && " ⚠️"}
+            </TabsTrigger>
             <TabsTrigger value="comments">
               Comments ({request._count.comments})
             </TabsTrigger>
@@ -154,6 +164,19 @@ export default async function RequestPage({ params }: RequestPageProps) {
               projectId={params.projectId}
               members={members}
               isOwner={isOwner}
+              canEdit={isOwner || request.assignedToId === session.user.id || request.createdById === session.user.id}
+            />
+          </TabsContent>
+
+          <TabsContent value="approvals">
+            <ApprovalsSection
+              requestId={request.id}
+              projectId={params.projectId}
+              approvals={request.approvals as any}
+              requestStatus={request.status}
+              isOwner={isOwner}
+              isClient={isClient}
+              clients={clients.map(c => c.user)}
               canEdit={isOwner || request.assignedToId === session.user.id || request.createdById === session.user.id}
             />
           </TabsContent>
