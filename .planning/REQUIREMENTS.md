@@ -1,19 +1,46 @@
 # Requirements: Brian — Freelance Board System
 
 **Defined:** 2026-03-26
+**Updated:** 2026-03-27
 **Core Value:** Freelancers can track and bill every unit of work through a structured workflow: creation → planning → execution → review → approval → completion with full audit trail.
 
-## v1 Requirements
+## v1.1 Requirements — Polish & Quality
 
-Requirements for initial release. Each maps to roadmap phases.
+**Goal:** Improve UX polish, add test coverage, and update core dependencies to latest stable versions.
+
+### Dependency Updates
+
+- [ ] **DEPS-01**: User can run app on Next.js 16 with all features working
+- [ ] **DEPS-02**: User can run app on Prisma 7 with all database operations working
+- [ ] **DEPS-03**: User can build and deploy without dependency conflicts
+
+### UX Polish
+
+- [ ] **UX-01**: User sees loading skeletons while data fetches (dashboard, board, requests)
+- [ ] **UX-02**: User sees helpful empty states with CTAs when no data exists
+- [ ] **UX-03**: User experiences smooth animations on drag-drop, modals, and transitions
+- [ ] **UX-04**: User can use app comfortably on mobile devices (responsive audit)
+
+### Testing & Quality
+
+- [ ] **TEST-01**: User flows are tested E2E: login, create project, create request, drag card
+- [ ] **TEST-02**: User sees graceful error boundaries instead of crashes
+- [ ] **TEST-03**: User gets meaningful error messages on API failures
+
+---
+
+## v1.0 Requirements — MVP (✅ SHIPPED)
+
+All v1.0 requirements completed 2026-03-27.
+
+<details>
+<summary>View v1.0 requirements (40 complete)</summary>
 
 ### Authentication
 
 - [x] **AUTH-01**: User can sign up with email and password
 - [x] **AUTH-02**: User session persists across browser refresh (JWT)
 - [x] **AUTH-03**: User can log out from any page
-- [ ] **AUTH-04**: User can reset password via email link *(deferred to v1.1)*
-- [ ] **AUTH-05**: Email verification after signup *(deferred to v1.1)*
 
 ### Projects
 
@@ -24,7 +51,6 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PROJ-05**: Project settings (requireEstimateBeforeStart, estimateRequired)
 - [x] **PROJ-06**: Owner can edit project
 - [x] **PROJ-07**: Owner can delete project (cascades requests)
-- [ ] **PROJ-08**: Archival generates JSON snapshot *(deferred to v1.1)*
 
 ### Member Management
 
@@ -76,12 +102,18 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DASH-01**: Display project list on dashboard
 - [x] **DASH-02**: Filter projects by status (active/archived)
 
-## v2 Requirements
+</details>
+
+---
+
+## v2 Requirements (Future)
 
 Deferred to future release. Tracked but not in current roadmap.
 
 ### Authentication
 
+- **AUTH-04**: User can reset password via email link
+- **AUTH-05**: Email verification after signup
 - **AUTH-06**: OAuth login (Google, GitHub)
 - **AUTH-07**: Two-factor authentication
 
@@ -96,6 +128,7 @@ Deferred to future release. Tracked but not in current roadmap.
 - **ADVN-02**: Custom workflow statuses
 - **ADVN-03**: Export project data (PDF/CSV)
 - **ADVN-04**: Basic invoicing from hours logged
+- **PROJ-08**: Archival generates JSON snapshot
 
 ## Out of Scope
 
@@ -111,10 +144,29 @@ Explicitly excluded. Documented to prevent scope creep.
 | Real-time collaboration | WebSocket/polling deferred |
 | Mobile app | Web-only initially |
 | OAuth login | Email/password sufficient for v1 |
+| Unit tests | Focus on E2E for v1.1, unit tests later |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
+### v1.1 Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DEPS-01 | — | Pending |
+| DEPS-02 | — | Pending |
+| DEPS-03 | — | Pending |
+| UX-01 | — | Pending |
+| UX-02 | — | Pending |
+| UX-03 | — | Pending |
+| UX-04 | — | Pending |
+| TEST-01 | — | Pending |
+| TEST-02 | — | Pending |
+| TEST-03 | — | Pending |
+
+### v1.0 Traceability (Archived)
+
+<details>
+<summary>View v1.0 traceability</summary>
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -161,11 +213,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APPR-03 | Phase 9 | ✅ Complete |
 | APPR-04 | Phase 9 | ✅ Complete |
 
+</details>
+
 **Coverage:**
-- v1 requirements: 42 total
-- Completed: 40 ✅
-- Deferred to v1.1: 2 (AUTH-04, AUTH-05, PROJ-08)
+- v1.1 requirements: 10 total (0 complete)
+- v1.0 requirements: 40 total (40 complete ✅)
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-27 after v1.0 milestone verification*
+*Last updated: 2026-03-27 after v1.1 milestone start*
