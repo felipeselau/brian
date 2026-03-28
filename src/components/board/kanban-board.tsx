@@ -63,6 +63,7 @@ export function KanbanBoard({
   projectId,
   initialColumns,
   initialTickets,
+  onAddTicket,
 }: KanbanBoardProps) {
   const router = useRouter();
   const [columns] = useState<Column[]>(initialColumns);
@@ -193,9 +194,9 @@ export function KanbanBoard({
   };
 
   const handleAddTicket = (columnId: string) => {
-    // This will be handled by the TicketModal
-    // For now, redirect to create
-    router.push(`/projects/${projectId}/tickets/new?status=${columnId}`);
+    if (onAddTicket) {
+      onAddTicket(columnId);
+    }
   };
 
   const handleTicketClick = (ticketId: string) => {

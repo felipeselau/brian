@@ -44,7 +44,7 @@ export function CreateProjectDialog() {
         throw new Error(error.error || "Failed to create project");
       }
 
-      const project = await response.json();
+      const { project: newProject } = await response.json();
 
       toast.success("Project created! Your brain is organized.");
       setOpen(false);
@@ -54,7 +54,7 @@ export function CreateProjectDialog() {
         startDate: new Date().toISOString().split("T")[0],
       });
       router.refresh();
-      router.push(`/projects/${project.id}`);
+      router.push(`/projects/${newProject.id}`);
     } catch (error) {
       console.error("Error creating project:", error);
       toast.error(
