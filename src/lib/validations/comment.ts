@@ -1,12 +1,20 @@
 import { z } from "zod";
 
 export const createCommentSchema = z.object({
-  content: z.string().min(1, "Comment cannot be empty"),
+  content: z
+    .string()
+    .min(1, "Comment cannot be empty")
+    .transform((val) => val.trim())
+    .refine((val) => val.length > 0, "Comment cannot be empty"),
   mentions: z.array(z.string()).optional().default([]),
 });
 
 export const updateCommentSchema = z.object({
-  content: z.string().min(1, "Comment cannot be empty"),
+  content: z
+    .string()
+    .min(1, "Comment cannot be empty")
+    .transform((val) => val.trim())
+    .refine((val) => val.length > 0, "Comment cannot be empty"),
   mentions: z.array(z.string()).optional().default([]),
 });
 

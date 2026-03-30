@@ -1,11 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { prismaTest, seedTestData, resetDatabase } from "../setup/test-db";
 import { USERS, PROJECTS } from "../setup/fixtures";
 
 describe("Test Infrastructure", () => {
+  beforeEach(async () => {
+    await resetDatabase();
+  });
+
   describe("Database Setup", () => {
     it("should reset database successfully", async () => {
-      await resetDatabase();
       const userCount = await prismaTest.user.count();
       expect(userCount).toBe(0);
     });
