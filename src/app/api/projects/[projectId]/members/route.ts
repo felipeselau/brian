@@ -35,6 +35,14 @@ export async function GET(
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
         members: {
           include: {
             user: {
@@ -63,7 +71,30 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ members: project.members });
+    // Flatten member objects for autocomplete compatibility
+    const seen = new Set<string>();
+    const flatMembers: Array<{
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+      role: string;
+    }> = [];
+
+    // Include project owner
+    if (project.owner && !seen.has(project.owner.id)) {
+      seen.add(project.owner.id);
+      flatMembers.push({ ...project.owner, role: "OWNER" });
+    }
+
+    for (const m of project.members) {
+      if (!seen.has(m.user.id)) {
+        seen.add(m.user.id);
+        flatMembers.push({ ...m.user, role: m.role });
+      }
+    }
+
+    return NextResponse.json({ members: flatMembers });
   } catch (error) {
     console.error("Error fetching members:", error);
     return NextResponse.json(

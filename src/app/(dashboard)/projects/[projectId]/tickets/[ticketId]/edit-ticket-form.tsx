@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TicketStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import {
   Select,
   SelectContent,
@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Calendar } from "lucide-react";
 
 interface Member {
   id: string;
@@ -36,6 +36,7 @@ interface Ticket {
   status: TicketStatus;
   estimatedHours: number | null;
   loggedHours: number;
+  dueDate?: string | Date | null;
   assignedTo: {
     id: string;
     name: string | null;
@@ -86,9 +87,33 @@ export function EditTicketForm({
     assignedToId: ticket.assignedTo?.id || "",
     estimatedHours: ticket.estimatedHours?.toString() || "",
     loggedHours: ticket.loggedHours?.toString() || "0",
+    dueDate: ticket.dueDate ? new Date(ticket.dueDate).toISOString().split("T")[0] : "",
   });
 
   const workers = members.filter((m) => m.role === "WORKER");
+
+  const handleImageUpload = useCallback(
+    async (file: File): Promise<string> => {
+      const formData = new FormData();
+      formData.append("files", file);
+
+      const response = await fetch(
+        `/api/projects/${projectId}/tickets/${ticket.id}/attachments/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const { attachments } = await response.json();
+      return attachments[0]?.url;
+    },
+    [projectId, ticket.id]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +128,7 @@ export function EditTicketForm({
           assignedToId: formData.assignedToId === "__unassigned__" || formData.assignedToId === "" ? null : formData.assignedToId,
           estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
           loggedHours: formData.loggedHours ? parseFloat(formData.loggedHours) : undefined,
+          dueDate: formData.dueDate || null,
         }),
       });
 
@@ -165,13 +191,16 @@ export function EditTicketForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
+        <Label>Description</Label>
+        <MarkdownEditor
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={6}
+          onChange={(v) => setFormData({ ...formData, description: v })}
+          placeholder="Add a description... (Markdown supported)"
           disabled={!canEdit || isLoading}
+          minRows={4}
+          maxRows={12}
+          showPreview={true}
+          onImageUpload={handleImageUpload}
         />
       </div>
 
@@ -218,7 +247,18 @@ export function EditTicketForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="dueDate">Due Date</Label>
+          <Input
+            id="dueDate"
+            type="date"
+            value={formData.dueDate}
+            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+            disabled={!canEdit || isLoading}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="estimatedHours">Estimated Hours</Label>
           <Input

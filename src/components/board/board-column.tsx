@@ -17,12 +17,23 @@ interface Ticket {
   status: TicketStatus;
   estimatedHours: number | null;
   loggedHours: number;
+  coverImage?: string | null;
+  dueDate?: string | null;
   assignedTo: {
     id: string;
     name: string | null;
     email: string;
     image: string | null;
   } | null;
+  _count?: {
+    comments: number;
+    attachments: number;
+  };
+  labels?: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
 }
 
 interface BoardColumnProps {

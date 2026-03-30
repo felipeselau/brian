@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { z } from "zod";
-
-const createCommentSchema = z.object({
-  content: z.string().min(1, "Comment cannot be empty"),
-});
+import { createCommentSchema } from "@/lib/validations/comment";
 
 // GET /api/projects/[projectId]/tickets/[ticketId]/comments - List comments
 export async function GET(
@@ -117,6 +113,7 @@ export async function POST(
         content: validatedData.content,
         ticketId,
         userId: session.user.id,
+        mentions: validatedData.mentions.length > 0 ? validatedData.mentions : undefined,
       },
       include: {
         user: {
