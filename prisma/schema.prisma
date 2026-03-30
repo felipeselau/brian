@@ -56,6 +56,7 @@ model User {
   createdTickets   Ticket[]         @relation("CreatedTickets")
   comments         Comment[]
   sentInvites      Invite[]         @relation("SentInvites")
+  reactions        Reaction[]
   
   @@map("users")
 }
@@ -79,6 +80,7 @@ model Project {
   members     ProjectMember[]
   tickets     Ticket[]
   invites     Invite[]
+  labels      Label[]
   
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -129,6 +131,12 @@ model Ticket {
   
   isClientRequest Boolean      @default(false)
   
+  // Due date
+  dueDate        DateTime?
+  
+  // Cover image URL
+  coverImage     String?
+  
   // JSON fields
   approvals      Json          // { owner: boolean?, client: boolean? }
   lifecycleLog   Json          // Array: [{ from, to, by, at }]
@@ -136,6 +144,8 @@ model Ticket {
   // Relations
   comments       Comment[]
   attachments    Attachment[]
+  ticketLabels   TicketLabel[]
+  checklists     Checklist[]
   
   // Position in column (for ordering)
   position       Int           @default(0)
@@ -159,6 +169,11 @@ model Comment {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  reactions  Reaction[]
+  
+  // Mentions: array of user IDs mentioned in this comment
+  mentions  Json?   // e.g. ["userId1", "userId2"]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -181,6 +196,85 @@ model Attachment {
   
   @@index([ticketId])
   @@map("attachments")
+}
+
+model Label {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   // hex color e.g. "#ff5733"
+  
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  tickets   TicketLabel[]
+  
+  createdAt DateTime @default(now())
+  
+  @@index([projectId])
+  @@map("labels")
+}
+
+model TicketLabel {
+  ticketId String
+  labelId  String
+  
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  label    Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  
+  @@id([ticketId, labelId])
+  @@index([ticketId])
+  @@index([labelId])
+  @@map("ticket_labels")
+}
+
+model Checklist {
+  id        String          @id @default(cuid())
+  title     String
+  
+  ticketId  String
+  ticket    Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  items     ChecklistItem[]
+  position  Int             @default(0)
+  
+  createdAt DateTime        @default(now())
+  
+  @@index([ticketId])
+  @@map("checklists")
+}
+
+model ChecklistItem {
+  id          String    @id @default(cuid())
+  content     String
+  completed   Boolean   @default(false)
+  
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  
+  position    Int       @default(0)
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([checklistId])
+  @@map("checklist_items")
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  emoji     String   // e.g. "👍", "❤️"
+  
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
+  @@index([userId])
+  @@map("reactions")
 }
 
 model Invite {

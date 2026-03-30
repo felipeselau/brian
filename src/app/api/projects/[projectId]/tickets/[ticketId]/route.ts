@@ -18,6 +18,7 @@ const updateTicketSchema = z.object({
   assignedToId: z.string().optional().nullable(),
   estimatedHours: z.number().optional().nullable(),
   loggedHours: z.number().optional(),
+  dueDate: z.string().optional().nullable(),
 });
 
 export async function GET(
@@ -207,6 +208,7 @@ export async function PATCH(
     if (body.assignedToId !== undefined) updateData.assignedToId = body.assignedToId || null;
     if (body.estimatedHours !== undefined) updateData.estimatedHours = body.estimatedHours;
     if (body.loggedHours !== undefined) updateData.loggedHours = body.loggedHours;
+    if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
 
     updateData.lifecycleLog = lifecycleLog;
 

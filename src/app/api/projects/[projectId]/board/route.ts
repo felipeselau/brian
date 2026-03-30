@@ -67,6 +67,12 @@ export async function GET(
                 email: true,
               },
             },
+            _count: {
+              select: {
+                comments: true,
+                attachments: true,
+              },
+            },
           },
         },
       },
