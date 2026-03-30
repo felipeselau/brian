@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Project, ProjectStatus } from "@prisma/client";
 import { ProjectCard } from "./project-card";
 import { toast } from "sonner";
@@ -44,9 +45,7 @@ export function ProjectList({ projects, currentUserId }: ProjectListProps) {
       router.refresh();
     } catch (error) {
       console.error("Error deleting project:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete project"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete project");
     } finally {
       setDeletingId(null);
     }
@@ -69,39 +68,33 @@ export function ProjectList({ projects, currentUserId }: ProjectListProps) {
         throw new Error(error.error || "Failed to update project");
       }
 
-      toast.success(
-        newStatus === "ARCHIVED"
-          ? "Project archived"
-          : "Project restored"
-      );
+      toast.success(newStatus === "ARCHIVED" ? "Project archived" : "Project restored");
       router.refresh();
     } catch (error) {
       console.error("Error updating project:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update project"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to update project");
     }
   };
 
   if (projects.length === 0) {
     return (
-      <div className="text-center py-16 border-2 border-dashed rounded-xl">
-        <div className="flex justify-center mb-4">
-          <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-muted">
+      <div className="rounded-xl border-2 border-dashed py-16 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
             <Brain className="h-6 w-6 text-muted-foreground" />
           </div>
         </div>
-        <h3 className="text-lg font-semibold mb-1">Your deck is empty</h3>
-        <p className="text-muted-foreground mb-4">
+        <h3 className="mb-1 text-lg font-semibold">Your deck is empty</h3>
+        <p className="mb-4 text-muted-foreground">
           Create your first project and let Brian organize the chaos.
         </p>
-        <a
+        <Link
           href="/projects/new"
           className="inline-flex items-center gap-2 text-primary hover:underline"
         >
           <Plus className="h-4 w-4" />
           Create your first project
-        </a>
+        </Link>
       </div>
     );
   }

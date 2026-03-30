@@ -5,6 +5,11 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/.vitest
+/e2e/screenshots
+/e2e/videos
 
 # next.js
 /.next/

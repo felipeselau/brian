@@ -1,0 +1,251 @@
+# Brian CI/CD Pipeline
+# Optimized for GitHub Free tier (2000 min/month)
+#
+# Strategy:
+# - Run unit + integration tests on all PRs
+# - Run E2E tests only on main and PRs
+# - Single Chromium browser in CI (saves ~50% time)
+# - Cache dependencies aggressively
+# - Coverage thresholds block merging
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  DATABASE_URL: postgresql://brian:brian@localhost:5432/brian_test
+
+jobs:
+  # ====================
+  # Type Check + Lint
+  # ====================
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript
+        run: npx tsc --noEmit
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ====================
+  # Unit + Integration Tests
+  # ====================
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brian
+          POSTGRES_PASSWORD: brian
+          POSTGRES_DB: brian_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Push DB Schema
+        run: npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Run Tests with Coverage
+        run: npm run test:coverage
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          NEXTAUTH_SECRET: test-secret-for-ci
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+      - name: Check Coverage Thresholds
+        run: |
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat coverage/coverage-summary.json | jq -r '
+            "| Metric | Coverage |",
+            "|--------|----------|",
+            "| Lines | \(.total.lines.pct)% |",
+            "| Functions | \(.total.functions.pct)% |",
+            "| Branches | \(.total.branches.pct)% |",
+            "| Statements | \(.total.statements.pct)% |"
+          ' >> $GITHUB_STEP_SUMMARY || echo "Coverage summary not available"
+
+  # ====================
+  # E2E Tests
+  # ====================
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [typecheck, test] # Only run if other tests pass
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brian
+          POSTGRES_PASSWORD: brian
+          POSTGRES_DB: brian_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Push DB Schema
+        run: npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Seed Test Data
+        run: npx prisma db seed
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Build Application
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          NEXTAUTH_SECRET: test-secret-for-ci
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Run E2E Tests
+        run: npx playwright test --reporter=github
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          NEXTAUTH_SECRET: test-secret-for-ci
+          NEXTAUTH_URL: http://localhost:3000
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload Playwright Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-screenshots
+          path: test-results/
+          retention-days: 7
+
+  # ====================
+  # Build Check
+  # ====================
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [typecheck]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build Application
+        run: npm run build
+        env:
+          # Dummy values for build - not connected to real DB
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+          NEXTAUTH_SECRET: build-time-secret
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Check Bundle Size
+        run: |
+          echo "## Build Output" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          du -sh .next/ | awk '{print "Total: " $1}' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          du -sh .next/static/ 2>/dev/null | awk '{print "Static: " $1}' >> $GITHUB_STEP_SUMMARY || true
