@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Next.js
+.next
+out
+build
+dist
+
+# Testing
+coverage
+playwright-report
+test-results
+
+# Misc
+.DS_Store
+*.pem
+
+# Logs
+*.log
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Git
+.git
+
+# Build artifacts
+*.tsbuildinfo

@@ -1,0 +1,9 @@
+echo "🧪 Running pre-push validations..."
+
+echo "⚙️  Type checking..."
+npm run ci:typecheck || exit 1
+
+echo "🧪 Running unit tests..."
+npm run test:unit || exit 1
+
+echo "✅ All pre-push checks passed!"

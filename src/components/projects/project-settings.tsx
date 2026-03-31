@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserRole } from "@prisma/client";
@@ -72,25 +72,23 @@ export function ProjectSettings({
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   // Fetch pending invites
-  const fetchPendingInvites = async () => {
+  const fetchPendingInvites = useCallback(async () => {
     try {
       const response = await fetch(`/api/invites?projectId=${projectId}`);
       if (response.ok) {
         const data = await response.json();
-        setPendingInvites(
-          data.invites.filter((i: PendingInvite) => i.status === "PENDING")
-        );
+        setPendingInvites(data.invites.filter((i: PendingInvite) => i.status === "PENDING"));
       }
     } catch (err) {
       console.error("Error fetching pending invites:", err);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     if (isOwner) {
       fetchPendingInvites();
     }
-  }, [projectId, isOwner]);
+  }, [projectId, isOwner, fetchPendingInvites]);
 
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,26 +231,22 @@ export function ProjectSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-2">Team Members</h2>
-        <p className="text-muted-foreground">
-          Manage who has access to this project
-        </p>
+        <h2 className="mb-2 text-xl font-semibold">Team Members</h2>
+        <p className="text-muted-foreground">Manage who has access to this project</p>
       </div>
 
       {isOwner && (
         <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
             <Button variant="outline" className="mr-2">
-              <Mail className="h-4 w-4 mr-2" />
+              <Mail className="mr-2 h-4 w-4" />
               Invite Member
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Invite Team Member</DialogTitle>
-              <DialogDescription>
-                Send an email invitation to join this project
-              </DialogDescription>
+              <DialogDescription>Send an email invitation to join this project</DialogDescription>
             </DialogHeader>
 
             {!lastInviteUrl ? (
@@ -285,9 +279,7 @@ export function ProjectSettings({
                   </Select>
                 </div>
 
-                {error && (
-                  <p className="text-sm text-destructive">{error}</p>
-                )}
+                {error && <p className="text-sm text-destructive">{error}</p>}
 
                 <div className="flex justify-end gap-2">
                   <Button
@@ -299,21 +291,17 @@ export function ProjectSettings({
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {isLoading ? "Sending..." : "Send Invite"}
                   </Button>
                 </div>
               </form>
             ) : (
               <div className="space-y-4">
-                <div className="rounded-lg bg-green-50 border border-green-200 p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="mb-2 flex items-center gap-2">
                     <Check className="h-5 w-5 text-green-600" />
-                    <p className="font-medium text-green-800">
-                      Invite sent successfully!
-                    </p>
+                    <p className="font-medium text-green-800">Invite sent successfully!</p>
                   </div>
                   <p className="text-sm text-green-700">
                     An email has been sent to <strong>{newMemberEmail}</strong>.
@@ -323,20 +311,18 @@ export function ProjectSettings({
                 <div className="space-y-2">
                   <Label>Invite Link (backup)</Label>
                   <div className="flex gap-2">
-                    <Input
-                      value={lastInviteUrl}
-                      readOnly
-                      className="text-sm"
-                    />
+                    <Input value={lastInviteUrl} readOnly className="text-sm" />
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => navigator.clipboard.writeText(lastInviteUrl).then(() => {
-                        setCopied("last");
-                        toast.success("Link copied!");
-                        setTimeout(() => setCopied(null), 2000);
-                      })}
+                      onClick={() =>
+                        navigator.clipboard.writeText(lastInviteUrl).then(() => {
+                          setCopied("last");
+                          toast.success("Link copied!");
+                          setTimeout(() => setCopied(null), 2000);
+                        })
+                      }
                     >
                       {copied === "last" ? (
                         <Check className="h-4 w-4" />
@@ -346,15 +332,12 @@ export function ProjectSettings({
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    You can share this link directly if the email doesn&apos;t
-                    arrive.
+                    You can share this link directly if the email doesn&apos;t arrive.
                   </p>
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={() => handleDialogClose(false)}>
-                    Done
-                  </Button>
+                  <Button onClick={() => handleDialogClose(false)}>Done</Button>
                 </div>
               </div>
             )}
@@ -365,12 +348,12 @@ export function ProjectSettings({
       {/* Members List */}
       <div className="space-y-3">
         {!members.length ? (
-          <p className="text-muted-foreground text-sm">No members yet</p>
+          <p className="text-sm text-muted-foreground">No members yet</p>
         ) : (
           members.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-3 rounded-lg border"
+              className="flex items-center justify-between rounded-lg border p-3"
             >
               <div className="flex items-center gap-3">
                 <Avatar>
@@ -380,12 +363,8 @@ export function ProjectSettings({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">
-                    {member.user.name || "Unknown User"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {member.user.email}
-                  </p>
+                  <p className="font-medium">{member.user.name || "Unknown User"}</p>
+                  <p className="text-sm text-muted-foreground">{member.user.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -412,15 +391,15 @@ export function ProjectSettings({
       {/* Pending Invites */}
       {isOwner && pendingInvites.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-3">Pending Invites</h3>
+          <h3 className="mb-3 text-lg font-semibold">Pending Invites</h3>
           <div className="space-y-3">
             {pendingInvites.map((invite) => (
               <div
                 key={invite.id}
-                className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
+                className="flex items-center justify-between rounded-lg border bg-muted/50 p-3"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
@@ -439,9 +418,9 @@ export function ProjectSettings({
                     disabled={copied === invite.token}
                   >
                     {copied === invite.token ? (
-                      <Check className="h-4 w-4 mr-1" />
+                      <Check className="mr-1 h-4 w-4" />
                     ) : (
-                      <Copy className="h-4 w-4 mr-1" />
+                      <Copy className="mr-1 h-4 w-4" />
                     )}
                     {copied === invite.token ? "Copied" : "Copy Link"}
                   </Button>
@@ -452,9 +431,9 @@ export function ProjectSettings({
                     disabled={resendingId === invite.id}
                   >
                     {resendingId === invite.id ? (
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                     ) : (
-                      <RefreshCw className="h-4 w-4 mr-1" />
+                      <RefreshCw className="mr-1 h-4 w-4" />
                     )}
                     {resendingId === invite.id ? "Sending..." : "Resend"}
                   </Button>
@@ -466,9 +445,9 @@ export function ProjectSettings({
                     className="text-destructive hover:text-destructive"
                   >
                     {revokingId === invite.id ? (
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                     ) : (
-                      <X className="h-4 w-4 mr-1" />
+                      <X className="mr-1 h-4 w-4" />
                     )}
                     {revokingId === invite.id ? "Revoking..." : "Revoke"}
                   </Button>
