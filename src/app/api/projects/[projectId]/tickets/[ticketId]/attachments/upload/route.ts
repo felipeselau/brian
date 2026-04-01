@@ -53,10 +53,7 @@ export async function POST(
     }
 
     if (files.length > MAX_FILES) {
-      return NextResponse.json(
-        { error: `Maximum ${MAX_FILES} files allowed` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `Maximum ${MAX_FILES} files allowed` }, { status: 400 });
     }
 
     const attachments = [];
@@ -99,9 +96,6 @@ export async function POST(
     return NextResponse.json({ attachments }, { status: 201 });
   } catch (error) {
     console.error("Error uploading files:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
