@@ -19,10 +19,7 @@ export async function POST(req: NextRequest) {
     const { projectId } = body;
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: "Project ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
     }
 
     // Validate input
@@ -34,7 +31,12 @@ export async function POST(req: NextRequest) {
     // Check if user is the project owner
     const project = await prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true, title: true, ownerId: true, owner: { select: { name: true, email: true } } },
+      select: {
+        id: true,
+        title: true,
+        ownerId: true,
+        owner: { select: { name: true, email: true } },
+      },
     });
 
     if (!project) {
@@ -42,10 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (project.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Only project owners can send invites" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Only project owners can send invites" }, { status: 403 });
     }
 
     // Check if email is already a member
@@ -105,7 +104,7 @@ export async function POST(req: NextRequest) {
         const ownerName = project.owner.name || project.owner.email;
 
         await resend.emails.send({
-          from: "Brian <noreply@resend.dev>",
+          from: "Brian <noreply@brian.luizfelipedev.com>",
           to: [validatedData.email],
           subject: `You've been invited to join ${project.title}`,
           react: InviteEmail({
@@ -165,7 +164,7 @@ export async function POST(req: NextRequest) {
       const ownerName = project.owner.name || project.owner.email;
 
       await resend.emails.send({
-        from: "Brian <noreply@resend.dev>",
+        from: "Brian <noreply@brian.luizfelipedev.com>",
         to: [validatedData.email],
         subject: `You've been invited to join ${project.title}`,
         react: InviteEmail({
@@ -211,7 +210,7 @@ export async function POST(req: NextRequest) {
     const ownerName = project.owner.name || project.owner.email;
 
     await resend.emails.send({
-      from: "Brian <noreply@resend.dev>",
+      from: "Brian <noreply@brian.luizfelipedev.com>",
       to: [validatedData.email],
       subject: `You've been invited to join ${project.title}`,
       react: InviteEmail({
@@ -245,10 +244,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.error("Error creating invite:", error);
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
@@ -265,10 +261,7 @@ export async function GET(req: NextRequest) {
     const projectId = searchParams.get("projectId");
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: "Project ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
     }
 
     // Check if user is the project owner
@@ -282,10 +275,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (project.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Only project owners can view invites" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Only project owners can view invites" }, { status: 403 });
     }
 
     const invites = await prisma.invite.findMany({
@@ -296,10 +286,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ invites });
   } catch (error) {
     console.error("Error fetching invites:", error);
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
@@ -316,10 +303,7 @@ export async function DELETE(req: NextRequest) {
     const { inviteId } = body;
 
     if (!inviteId) {
-      return NextResponse.json(
-        { error: "Invite ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invite ID is required" }, { status: 400 });
     }
 
     // Find the invite
@@ -349,9 +333,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ message: "Invite revoked successfully" });
   } catch (error) {
     console.error("Error revoking invite:", error);
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
