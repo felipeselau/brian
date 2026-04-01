@@ -30,10 +30,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
   // Fetch all user's projects
   const projects = await prisma.project.findMany({
     where: {
-      OR: [
-        { ownerId: session.user.id },
-        { members: { some: { userId: session.user.id } } },
-      ],
+      OR: [{ ownerId: session.user.id }, { members: { some: { userId: session.user.id } } }],
       ...(statusFilter && { status: statusFilter }),
     },
     include: {
@@ -73,16 +70,18 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">All Projects</h1>
-            <p className="text-muted-foreground">
-              Manage all your projects in one place
-            </p>
+            <p className="text-muted-foreground">Manage all your projects in one place</p>
           </div>
           {session.user.role === UserRole.OWNER && <CreateProjectDialog />}
         </div>
 
         {/* TODO: Add filter/status selector when we implement client-side filtering */}
-        
-        <ProjectList projects={projects} currentUserId={session.user.id} />
+
+        <ProjectList
+          projects={projects}
+          currentUserId={session.user.id}
+          isOwner={session.user.role === UserRole.OWNER}
+        />
       </div>
     </div>
   );

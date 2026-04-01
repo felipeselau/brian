@@ -7,6 +7,7 @@ import { Project, ProjectStatus } from "@prisma/client";
 import { ProjectCard } from "./project-card";
 import { toast } from "sonner";
 import { Brain, Plus } from "lucide-react";
+import { CreateProjectDialog } from "./create-project-dialog";
 
 interface ProjectWithCounts extends Project {
   _count: {
@@ -18,9 +19,10 @@ interface ProjectWithCounts extends Project {
 interface ProjectListProps {
   projects: ProjectWithCounts[];
   currentUserId: string;
+  isOwner: boolean;
 }
 
-export function ProjectList({ projects, currentUserId }: ProjectListProps) {
+export function ProjectList({ projects, currentUserId, isOwner }: ProjectListProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -86,15 +88,13 @@ export function ProjectList({ projects, currentUserId }: ProjectListProps) {
         </div>
         <h3 className="mb-1 text-lg font-semibold">Your deck is empty</h3>
         <p className="mb-4 text-muted-foreground">
-          Create your first project and let Brian organize the chaos.
+          {isOwner ? (
+            <>Create your first project and let Brian organize the chaos.</>
+          ) : (
+            <>You don&apos;t have any projects yet.</>
+          )}
         </p>
-        <Link
-          href="/projects/new"
-          className="inline-flex items-center gap-2 text-primary hover:underline"
-        >
-          <Plus className="h-4 w-4" />
-          Create your first project
-        </Link>
+        {isOwner && <CreateProjectDialog />}
       </div>
     );
   }

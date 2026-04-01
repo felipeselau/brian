@@ -17,10 +17,7 @@ export default async function DashboardPage() {
   // Fetch user's projects (owned + member)
   const projects = await prisma.project.findMany({
     where: {
-      OR: [
-        { ownerId: session.user.id },
-        { members: { some: { userId: session.user.id } } },
-      ],
+      OR: [{ ownerId: session.user.id }, { members: { some: { userId: session.user.id } } }],
       status: "ACTIVE",
     },
     include: {
@@ -58,20 +55,14 @@ export default async function DashboardPage() {
   // Get stats
   const totalProjects = await prisma.project.count({
     where: {
-      OR: [
-        { ownerId: session.user.id },
-        { members: { some: { userId: session.user.id } } },
-      ],
+      OR: [{ ownerId: session.user.id }, { members: { some: { userId: session.user.id } } }],
     },
   });
 
   const activeTickets = await prisma.ticket.count({
     where: {
       project: {
-        OR: [
-          { ownerId: session.user.id },
-          { members: { some: { userId: session.user.id } } },
-        ],
+        OR: [{ ownerId: session.user.id }, { members: { some: { userId: session.user.id } } }],
       },
       status: {
         in: ["BACKLOG", "IN_PROGRESS", "REVIEW", "BLOCKED", "WAITING"],
@@ -83,10 +74,7 @@ export default async function DashboardPage() {
   const tickets = await prisma.ticket.findMany({
     where: {
       project: {
-        OR: [
-          { ownerId: session.user.id },
-          { members: { some: { userId: session.user.id } } },
-        ],
+        OR: [{ ownerId: session.user.id }, { members: { some: { userId: session.user.id } } }],
       },
     },
     select: {
@@ -112,20 +100,20 @@ export default async function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">Projects</h3>
-            <p className="text-2xl font-bold mt-2">{totalProjects}</p>
+            <p className="mt-2 text-2xl font-bold">{totalProjects}</p>
           </div>
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">Active Briefs</h3>
-            <p className="text-2xl font-bold mt-2">{activeTickets}</p>
+            <p className="mt-2 text-2xl font-bold">{activeTickets}</p>
           </div>
           <div className="rounded-lg border p-6">
             <h3 className="font-semibold">Hours Logged</h3>
-            <p className="text-2xl font-bold mt-2">{totalHours.toFixed(1)}h</p>
+            <p className="mt-2 text-2xl font-bold">{totalHours.toFixed(1)}h</p>
           </div>
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-bold">Recent Projects</h2>
             {projects.length > 0 && (
               <Button variant="outline" asChild>
@@ -133,7 +121,11 @@ export default async function DashboardPage() {
               </Button>
             )}
           </div>
-          <ProjectList projects={projects} currentUserId={session.user.id} />
+          <ProjectList
+            projects={projects}
+            currentUserId={session.user.id}
+            isOwner={session.user.role === UserRole.OWNER}
+          />
         </div>
       </div>
     </div>
